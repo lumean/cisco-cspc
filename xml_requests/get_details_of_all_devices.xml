@@ -1,0 +1,7 @@
+<Request xmlns="http://www.parinetworks.com/api/schemas/1.1" requestId="">
+  <Manage>
+    <Get operationId="1">
+      <DeviceList all="true" />
+    </Get>
+  </Manage>
+</Request>
