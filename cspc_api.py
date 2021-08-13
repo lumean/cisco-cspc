@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import base64
-import ssl
-import http.client
 import logging
 import os
 import sys
@@ -15,20 +13,35 @@ class CspcApi:
 
     xml_request_dir = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'xml_requests')
 
-    def __init__(self, host, user, pwd):
+    def __init__(self, host, user, pwd, verify):
+        '''
+
+        Args:
+            host (str): IP or hostname (without https://) of CSPC
+            user (str): Username for ers API
+            password (str): Password for ers API user
+            verify (bool): enable / disable certificate check for requests to CSPC.
+        '''
 
         self.logger = logging.getLogger('CspcApi')
-        self.host = host
-        self.endpoint = 'https://{}:8001/cspc/xml'.format(host)
+        self.host = host + ':8001'
         self.user = user
         self.password = pwd
         self.creds = ':'.join([self.user, self.password])
         self.encodedAuth = base64.b64encode(self.creds.encode('utf-8'))
 
+        if not verify:
+            import urllib3
+            urllib3.disable_warnings()
+
         self.headers = {
             #'accept': 'application/xml',
             'Authorization': ' '.join(['Basic', self.encodedAuth.decode('utf-8')]),
             'cache-control': 'no-cache',
+        }
+        self.kwargs = {
+            'verify' : verify,
+            'headers': self.headers
         }
 
     def _info(self):
@@ -37,14 +50,13 @@ class CspcApi:
         Returns:
             str: response body of CSPC get /cspc/info 
         """
-        link = '/cspc/info'
-        conn = http.client.HTTPSConnection(self.host, context=ssl.SSLContext(ssl.PROTOCOL_TLSv1_2))
-        conn.request('GET', link, headers=self.headers)
-        self.logger.debug('GET https://' + conn.host + ':' + str(conn.port) + link + '\nRequest Headers: ' + str(self.headers))
-        response = conn.getresponse()
-        response_headers = response.info()
+        link = 'https://' + self.host + '/cspc/info'
+
+        self.logger.debug('GET ' + link + '\nRequest Headers: ' + str(self.headers))
+        response = requests.get(link, **self.kwargs)
+        response_headers = response.headers
         self.logger.debug('Response Headers:\n' + str(response_headers))
-        body = response.read().decode('utf-8')
+        body = response.text
         self.logger.debug('Response Body:\n' + body)
         return body
 
@@ -66,16 +78,15 @@ class CspcApi:
         path = os.path.join(CspcApi.xml_request_dir, request_name)
         with open(path, 'r') as f:
             payload = f.read()
-        link = '/cspc/xml'
-        conn = http.client.HTTPSConnection(self.host, context=ssl.SSLContext(ssl.PROTOCOL_TLSv1_2))
-        conn.request('POST', link, headers=self.headers, body=payload)
-        self.logger.debug('POST https://' + conn.host + ':' + str(conn.port) + link +
+        link = 'https://' + self.host + '/cspc/xml'
+
+        self.logger.debug('POST ' + link +
             '\nRequest Headers: ' + str(self.headers) +
             '\nRequest Body: ' + str(payload))
-        response = conn.getresponse()
-        response_headers = response.info()
+        response = requests.get(link, **self.kwargs)
+        response_headers = response.headers
         self.logger.debug('Response Headers:\n' + str(response_headers))
-        body = response.read().decode('utf-8')
+        body = response.text
         self.logger.debug('Response Body:\n' + body)
         return body
 
@@ -298,7 +309,7 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         exit(f'usage: ./{sys.argv[0]} CSPC_IP')
 
-    c = CspcApi(f'{sys.argv[0]}:8001', os.environ.get('CSPC_USER'), os.environ.get('CSPC_PASSWORD'))
+    c = CspcApi(f'{sys.argv[1]}:8001', os.environ.get('CSPC_USER'), os.environ.get('CSPC_PASSWORD'))
     c._info()
    # print(os.path.realpath(__file__))
     u = c.get_unreachable_devices()
