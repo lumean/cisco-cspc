@@ -309,7 +309,7 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         exit(f'usage: ./{sys.argv[0]} CSPC_IP')
 
-    c = CspcApi(f'{sys.argv[1]}:8001', os.environ.get('CSPC_USER'), os.environ.get('CSPC_PASSWORD'))
+    c = CspcApi(f'{sys.argv[1]}:8001', os.environ.get('CSPC_USER'), os.environ.get('CSPC_PASSWORD'), verify=False)
     c._info()
-   # print(os.path.realpath(__file__))
+    # print(os.path.realpath(__file__))
     u = c.get_unreachable_devices()
