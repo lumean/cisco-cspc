@@ -62,23 +62,21 @@ class CspcApi:
         self.logger.debug('Response Body:\n' + body)
         return body
 
-    def _xml(self, request_name):
+    def _xml(self, payload):
         """ Performs POST xml request to CSPC
 
         Args:
-            request_name (str): name of an xml file in the `xml_request_dir`
+            payload (str): string, use _get_xml_payload() to load content from `xml_request_dir`
 
         Returns:
             str: body of the CSPC response, usually an xml string
 
         Example:
             # Parse the body with ElementTree (from xml.etree import ElementTree) to proceed:
-            all_devices = self._xml('get_details_of_all_devices.xml')
+            payload = self._get_xml_payload('get_details_of_all_devices.xml')
+            all_devices = self._xml(payload)
             tree = ElementTree.fromstring(all_devices)
         """
-        path = os.path.join(CspcApi.xml_request_dir, request_name)
-        with open(path, 'r') as f:
-            payload = f.read()
         link = 'https://' + self.host + '/cspc/xml'
 
         self.logger.debug('POST ' + link +
@@ -92,6 +90,36 @@ class CspcApi:
         if response.status_code != 200:
             raise RuntimeError(response)
         return body
+
+    def _get_xml_payload(self, request_name):
+        """Loads the full/skeleton xml request from an example file
+        
+        Args:
+            payload (str): xml file in the `xml_request_dir`
+
+        Returns:
+            str: xml from file string
+        """
+        path = os.path.join(CspcApi.xml_request_dir, request_name)
+        with open(path, 'r') as f:
+            payload = f.read()
+        return payload
+
+    def _get_xml_elem(self, path, elem_tree):
+        """Loads the full/skeleton xml request from an example file
+        
+        Args:
+            path (str): xpath to match on subelement to retrieve
+            elem_tree (xml.etree.ElementTree) : tree to search
+
+        Returns:
+            xml.etree.Element: element matched by xpath
+        """
+        namespaces = {
+            'ns': 'http://www.parinetworks.com/api/schemas/1.1'
+        }
+        return elem_tree.find(path, namespaces=namespaces)
+        
 
     def send_and_import_seed_file_csv(self, csv, device_group_name):
         """ upload seedfile to CSPC
@@ -175,7 +203,7 @@ class CspcApi:
             </Device>
         ```
         """
-        all_devices = self._xml('get_details_of_all_devices.xml')
+        all_devices = self._xml(self._get_xml_payload('get_details_of_all_devices.xml'))
         tree = ElementTree.fromstring(all_devices)
         devices = tree.findall('.//Device')
 
@@ -205,6 +233,99 @@ class CspcApi:
                 # print(dev_dict)
         return unreachable_devices
 
+    def _add_elem_with_text(self, tag, text, parent):
+        d = ElementTree.Element(tag)
+        d.text = text
+        parent.append(d)
+        return d
+
+    def add_multiple_device_credentials_ssh_snmp(self, credentials):
+        """Adds snmpv2c and sshv2 credentials for multiple devices by IP
+
+        Args:
+            credentials (dict): key = IPaddress, value = dict(user=, password=, enable_password=, snmp_read_community=, snmp_write_community=)
+        
+        Returns:
+            str: Response of CSPC
+        
+        Example:
+            This is an example payload for snmp or telnet credentials:
+            ```<DeviceCredential identifier="My_snmpv1_1">
+                <Protocol>snmpv1</Protocol>
+                <WriteCommunity>private</WriteCommunity>
+                <IpExpressionList>
+                    <IpExpression>*.*.*.*</IpExpression>
+                </IpExpressionList>
+                <ExcludeIpExprList>
+                    <IpExpression>192.168.*.*IpExpression>
+                </ExcludeIpExprList>
+            </DeviceCredential>
+            <DeviceCredential identifier="My_telnet_1">
+                <Protocol>telnet</Protocol>
+                <UserName>admin</UserName>
+                <Password>admin</Password>
+                <EnableUserName>testuser</EnableUserName>
+                <EnablePassword>testpass</EnablePassword>
+                <IpExpressionList>
+                    <IpExpression>*.*.*.*</IpExpression>
+                    <IpExpression>FE80::0009</IpExpression>
+                </IpExpressionList>
+                <ExcludeIpExprList>
+                    <IpExpression>192.168.0.*</IpExpression>
+                </ExcludeIpExprList>
+            </DeviceCredential>
+            ```
+        """
+        tree = ElementTree.fromstring(self._get_xml_payload('add_multiple_device_credentials.xml'))
+        cred_list = self._get_xml_elem('.//DeviceCredentialList', tree)
+        for ip, creds in credentials.items():
+            # SNMPv2c credential
+            snmp = ElementTree.Element('DeviceCredential', identifier=f'ise_{ip}_snmpv2c')
+            self._add_elem_with_text('Protocol', 'snmpv2c', snmp)
+            self._add_elem_with_text('ReadCommunity', creds['snmp_read_community'], snmp)
+            self._add_elem_with_text('WriteCommunity',creds['snmp_write_community'], snmp)
+            ip_expr = ElementTree.Element('IpExpressionList')
+            self._add_elem_with_text('IpExpression', ip, ip_expr)
+            snmp.append(ip_expr)
+
+            # SSHv2 credential
+            ssh = ElementTree.Element('DeviceCredential', identifier=f'ise_{ip}_sshv2')
+            self._add_elem_with_text('Protocol', 'sshv2', snmp)
+            self._add_elem_with_text('UserName', creds['user'], snmp)
+            self._add_elem_with_text('Password', creds['password'], snmp)
+            self._add_elem_with_text('EnablePassword', creds['enable_password'], snmp)
+            ip_expr = ElementTree.Element('IpExpressionList')
+            self._add_elem_with_text('IpExpression', ip, ip_expr)
+            ssh.append(ip_expr)
+
+            cred_list.append(snmp)
+            cred_list.append(ssh)
+
+        return self._xml(ElementTree.tostring(tree, encoding='unicode'))
+
+    def add_multiple_devices(self, devices):
+        """Adds multiple devices by IP and Hostname
+
+        Args:
+            devices (dict): key = IP address (can be either IPv4 or IPv6), value = Hostname
+
+        Returns:
+            str: Response of CSPC
+        """
+        tree = ElementTree.fromstring(self._get_xml_payload('add_multiple_devices.xml'))
+        device_list = self._get_xml_elem('.//DeviceList', tree)
+        for ip, hostname in devices.items():
+            elem = ElementTree.Element('Device')
+            d = ElementTree.Element('IPAddress')
+            d.text = ip
+            elem.append(d)
+            d = ElementTree.Element('HostName')
+            d.text = hostname
+            elem.append(d)
+            device_list.append(elem)
+
+        return self._xml(ElementTree.tostring(tree, encoding='unicode'))
+
     def delete_multiple_devices(self, device_array):
         """ Deletes multiple devices by ID from CSPC
 
@@ -214,21 +335,8 @@ class CspcApi:
         Returns:
             str: Response of CSPC
         """
-
-        namespaces = {
-            'ns': 'http://www.parinetworks.com/api/schemas/1.1'
-        }
-        #  xmlns="http://www.parinetworks.com/api/schemas/1.1"
-        payload = """<Request requestId="">
-  <Manage>
-    <Delete operationId="1">
-      <DeviceList>
-      </DeviceList>
-    </Delete>
-  </Manage>
-</Request>"""
-        tree = ElementTree.fromstring(payload)
-        device_list = tree.find('.//DeviceList', namespaces=namespaces)
+        tree = ElementTree.fromstring(self._get_xml_payload('delete_multiple_devices.xml'))
+        device_list = self._get_xml_elem('.//DeviceList', tree)
         for dev in device_array:
             elem = ElementTree.Element('Device')
             d = ElementTree.Element('Id')
@@ -236,11 +344,7 @@ class CspcApi:
             elem.append(d)
             device_list.append(elem)
 
-        with open(os.path.join(CspcApi.xml_request_dir, 'delete_multiple_devices.xml'), 'w') as f:
-            f.write(ElementTree.tostring(tree, encoding='unicode'))
-
-        # return "noop"
-        return self._xml('delete_multiple_devices.xml')
+        return self._xml(ElementTree.tostring(tree, encoding='unicode'))
 
     def get_formatted_csv_device_entry(self, ipaddress, hostname='', username='', password='', enable_password='', snmp_v2_RO='', snmp_v2_RW=''):
         """

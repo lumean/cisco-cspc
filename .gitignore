@@ -1,9 +1,5 @@
 
 
-# dynamically genenerated file at runtime
-xml_requests/delete_multiple_devices.xml
-
-
 # Ansible #
 *.retry
 
