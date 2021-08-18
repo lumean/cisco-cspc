@@ -83,11 +83,13 @@ class CspcApi:
         self.logger.debug('POST ' + link +
             '\nRequest Headers: ' + str(self.headers) +
             '\nRequest Body: ' + str(payload))
-        response = requests.get(link, **self.kwargs)
+        response = requests.post(link, payload, **self.kwargs)
         response_headers = response.headers
-        self.logger.debug('Response Headers:\n' + str(response_headers))
         body = response.text
+        self.logger.debug('Response Headers:\n' + str(response_headers))
         self.logger.debug('Response Body:\n' + body)
+        if response.status_code != 200:
+            raise RuntimeError(response)
         return body
 
 
