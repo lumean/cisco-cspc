@@ -15,6 +15,8 @@ class CspcApi:
     xml_request_dir = os.path.join(os.path.realpath(
         os.path.dirname(__file__)), 'xml_requests')
 
+    ElementTree.register_namespace('', 'http://www.parinetworks.com/api/schemas/1.1')
+
     def __init__(self, host, user, pwd, verify):
         '''
 
