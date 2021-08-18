@@ -6,7 +6,7 @@
 
 It provides methods to access the most frequently used APIs for adding & removing devices and corresponding credentials.
 This is currently far from a complete API client implementation, but I hope enough to get you started in synchronizing devices
-from you current inventory management system to CSPC.
+from your current inventory management system to CSPC.
 
 More information can be found at [CSPC Install and Upgrade Guides](https://www.cisco.com/c/en/us/support/cloud-systems-management/common-services-platform-collector-cspc/products-installation-guides-list.html) 
 
