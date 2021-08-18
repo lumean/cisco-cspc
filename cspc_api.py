@@ -285,26 +285,25 @@ class CspcApi:
         cred_list = self._get_xml_elem('DeviceCredentialList', tree)
         for ip, creds in credentials.items():
             # SNMPv2c credential
-            snmp = ElementTree.Element('DeviceCredential', identifier=f'ise_{ip}_snmpv2c')
-            self._add_elem_with_text('Protocol', 'snmpv2c', snmp)
-            self._add_elem_with_text('ReadCommunity', creds['snmp_read_community'], snmp)
-            self._add_elem_with_text('WriteCommunity',creds['snmp_write_community'], snmp)
+            device_credential = ElementTree.Element('DeviceCredential', identifier=f'ise_{ip}_snmpv2c')
+            self._add_elem_with_text('Protocol', 'snmpv2c', device_credential)
+            self._add_elem_with_text('ReadCommunity', creds['snmp_read_community'], device_credential)
+            self._add_elem_with_text('WriteCommunity',creds['snmp_write_community'], device_credential)
             ip_expr = ElementTree.Element('IpExpressionList')
             self._add_elem_with_text('IpExpression', ip, ip_expr)
-            snmp.append(ip_expr)
+            device_credential.append(ip_expr)
+            cred_list.append(device_credential)
 
             # SSHv2 credential
-            ssh = ElementTree.Element('DeviceCredential', identifier=f'ise_{ip}_sshv2')
-            self._add_elem_with_text('Protocol', 'sshv2', snmp)
-            self._add_elem_with_text('UserName', creds['user'], snmp)
-            self._add_elem_with_text('Password', creds['password'], snmp)
-            self._add_elem_with_text('EnablePassword', creds['enable_password'], snmp)
+            device_credential = ElementTree.Element('DeviceCredential', identifier=f'ise_{ip}_sshv2')
+            self._add_elem_with_text('Protocol', 'sshv2', device_credential)
+            self._add_elem_with_text('UserName', creds['user'], device_credential)
+            self._add_elem_with_text('Password', creds['password'], device_credential)
+            self._add_elem_with_text('EnablePassword', creds['enable_password'], device_credential)
             ip_expr = ElementTree.Element('IpExpressionList')
             self._add_elem_with_text('IpExpression', ip, ip_expr)
-            ssh.append(ip_expr)
-
-            cred_list.append(snmp)
-            cred_list.append(ssh)
+            device_credential.append(ip_expr)
+            cred_list.append(device_credential)
 
         return self._xml(ElementTree.tostring(tree, encoding='unicode'))
 
