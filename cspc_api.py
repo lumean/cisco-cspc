@@ -109,16 +109,18 @@ class CspcApi:
         """Loads the full/skeleton xml request from an example file
         
         Args:
-            path (str): xpath to match on subelement to retrieve
+            path (str): tag name to search for
             elem_tree (xml.etree.ElementTree) : tree to search
 
         Returns:
-            xml.etree.Element: element matched by xpath
+            xml.etree.Element: first element matched by tagname
         """
-        namespaces = {
+        # https://docs.python.org/3/library/xml.etree.elementtree.html
+        # xml library will prefix all elements with their NS from a parsed file.
+        ns = {
             'ns': 'http://www.parinetworks.com/api/schemas/1.1'
         }
-        return elem_tree.find(path, namespaces=namespaces)
+        return elem_tree.find(f'.//ns:{path}', namespaces=ns)
         
 
     def send_and_import_seed_file_csv(self, csv, device_group_name):
@@ -277,7 +279,8 @@ class CspcApi:
             ```
         """
         tree = ElementTree.fromstring(self._get_xml_payload('add_multiple_device_credentials.xml'))
-        cred_list = self._get_xml_elem('.//DeviceCredentialList', tree)
+  
+        cred_list = self._get_xml_elem('DeviceCredentialList', tree)
         for ip, creds in credentials.items():
             # SNMPv2c credential
             snmp = ElementTree.Element('DeviceCredential', identifier=f'ise_{ip}_snmpv2c')
@@ -313,7 +316,7 @@ class CspcApi:
             str: Response of CSPC
         """
         tree = ElementTree.fromstring(self._get_xml_payload('add_multiple_devices.xml'))
-        device_list = self._get_xml_elem('.//DeviceList', tree)
+        device_list = self._get_xml_elem('DeviceList', tree)
         for ip, hostname in devices.items():
             elem = ElementTree.Element('Device')
             d = ElementTree.Element('IPAddress')
@@ -336,7 +339,7 @@ class CspcApi:
             str: Response of CSPC
         """
         tree = ElementTree.fromstring(self._get_xml_payload('delete_multiple_devices.xml'))
-        device_list = self._get_xml_elem('.//DeviceList', tree)
+        device_list = self._get_xml_elem('DeviceList', tree)
         for dev in device_array:
             elem = ElementTree.Element('Device')
             d = ElementTree.Element('Id')
