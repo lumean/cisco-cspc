@@ -1,25 +1,43 @@
 # cisco-cspc
 
-TODO
-
-![add-image-here]()
- 
 ## Use Case Description
 
-Describe the problem this code addresses, how your code solves the problem, challenges you had to overcome as part of the solution, and optional ideas you have in mind that could further extend your solution.
+`cspc_api.py` is a small API client to Cisco's [Common Services Platform Collector (CSPC)](https://www.cisco.com/c/en/us/support/cloud-systems-management/common-services-platform-collector-cspc/series.html)
+
+It provides methods to access the most frequently used APIs for adding & removing devices and corresponding credentials.
+This is currently far from a complete API client implementation, but I hope enough to get you started in synchronizing devices
+from you current inventory management system to CSPC.
+
+More information can be found at [CSPC Install and Upgrade Guides](https://www.cisco.com/c/en/us/support/cloud-systems-management/common-services-platform-collector-cspc/products-installation-guides-list.html) 
 
 ## Installation
 
-Detailed instructions on how to install, configure, and get the project running. Call out any dependencies. This should be frequently tested and updated to make sure it works reliably, accounts for updated versions of dependencies, etc.
-
-## Configuration
-
-If the code is configurable, describe it in detail, either here or in other documentation that you reference.
+```
+git clone https://github.com/lumean/cisco-cspc.git
+cd cisco-cspc
+pip install -r requirements.txt
+```
 
 ## Usage
 
-Show users how to use the code. Be specific.
-Use appropriate formatting when showing code snippets or command line output.
+```
+# include this repo to your path (adapt accordingly):
+path = os.path.join(os.path.dirname(__file__), 'path', 'to', 'this', 'repo')
+sys.path.append(path)
+
+from cspc_api import CspcApi
+
+format = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"
+logfile=None
+logging.basicConfig(format=format, level=logging.DEBUG,
+                    datefmt="%H:%M:%S", filename=logfile)
+
+cspc = CspcApi('<IP of your CSPC server>', 'admin', 'admin_pass', verify=False)
+
+...
+```
+
+See also [Examples](examples/)
 
 ### DevNet Sandbox
 
@@ -27,28 +45,24 @@ A great way to make your repo easy for others to use is to provide a link to a [
 
 ## How to test the software
 
-Provide details on steps to test, versions of components/dependencies against which code was tested, date the code was last tested, etc. 
-If the repo includes automated tests, detail how to run those tests.
-If the repo is instrumented with a continuous testing framework, that is even better.
+Tested agains CSPC version 2.9. 
 
+For testing download and setup CSPC as VM.
 
-## Known issues
-
-Document any significant shortcomings with the code. If using [GitHub Issues](https://help.github.com/en/articles/about-issues) to track issues, make that known and provide any templates or conventions to be followed when opening a new issue. 
 
 ## Getting help
 
-Instruct users how to get help with this code; this might include links to an issues list, wiki, mailing list, etc.
-
-**Example**
-
 If you have questions, concerns, bug reports, etc., please create an issue against this repository.
+This project is maintained in my free time, so please be patient.
 
 ## Getting involved
 
-This section should detail why people should get involved and describe key areas you are currently focusing on; e.g., trying to get feedback on features, fixing certain bugs, building important pieces, etc. Include information on how to setup a development environment if different from general installation instructions.
+Pull requests are welcome!
 
-General instructions on _how_ to contribute should be stated with a link to [CONTRIBUTING](./CONTRIBUTING.md) file.
+Currently missing:
+- unit tests
+- integration testing with CSPC VM
+
 
 ## Author(s)
 
