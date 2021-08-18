@@ -9,9 +9,11 @@ import time
 from xml.etree import ElementTree
 import requests
 
+
 class CspcApi:
 
-    xml_request_dir = os.path.join(os.path.realpath(os.path.dirname(__file__)), 'xml_requests')
+    xml_request_dir = os.path.join(os.path.realpath(
+        os.path.dirname(__file__)), 'xml_requests')
 
     def __init__(self, host, user, pwd, verify):
         '''
@@ -35,12 +37,12 @@ class CspcApi:
             urllib3.disable_warnings()
 
         self.headers = {
-            #'accept': 'application/xml',
+            # 'accept': 'application/xml',
             'Authorization': ' '.join(['Basic', self.encodedAuth.decode('utf-8')]),
             'cache-control': 'no-cache',
         }
         self.kwargs = {
-            'verify' : verify,
+            'verify': verify,
             'headers': self.headers
         }
 
@@ -59,7 +61,6 @@ class CspcApi:
         body = response.text
         self.logger.debug('Response Body:\n' + body)
         return body
-
 
     def _xml(self, request_name):
         """ Performs POST xml request to CSPC
@@ -81,8 +82,8 @@ class CspcApi:
         link = 'https://' + self.host + '/cspc/xml'
 
         self.logger.debug('POST ' + link +
-            '\nRequest Headers: ' + str(self.headers) +
-            '\nRequest Body: ' + str(payload))
+                          '\nRequest Headers: ' + str(self.headers) +
+                          '\nRequest Body: ' + str(payload))
         response = requests.post(link, payload, **self.kwargs)
         response_headers = response.headers
         body = response.text
@@ -91,8 +92,6 @@ class CspcApi:
         if response.status_code != 200:
             raise RuntimeError(response)
         return body
-
-
 
     def send_and_import_seed_file_csv(self, csv, device_group_name):
         """ upload seedfile to CSPC
@@ -126,26 +125,23 @@ class CspcApi:
         </Request>
         """
 
-
         link = 'https://' + self.host + '/cspc/seedfile'
 
-        files = {'request': (None, xmlrequest.encode('utf8')), 'file': (seed_file_name, csv.encode('utf8'))}
+        files = {'request': (None, xmlrequest.encode('utf8')), 'file': (
+            seed_file_name, csv.encode('utf8'))}
 
         response = requests.post(link, files=files, headers=self.headers, verify=False)
 
-        self.logger.debug('POST '+ link +
-            '\nRequest Headers: ' + str(self.headers) +
+        self.logger.debug('POST ' + link +
+                          '\nRequest Headers: ' + str(self.headers) +
                           '\nRequest Body: ' + str(files))
 
-        response_headers =response.headers
+        response_headers = response.headers
         self.logger.debug('Response Headers:\n' + str(response_headers))
         body = response.text
         self.logger.debug('Response Body:\n' + body)
 
         return body
-
-
-
 
     def get_devices(self):
         """returns an array of dict with all registered devices
@@ -187,7 +183,6 @@ class CspcApi:
 
         return devices
 
-
     def get_unreachable_devices(self):
         """returns an array of dict with unreachable devices
 
@@ -207,9 +202,8 @@ class CspcApi:
                     'Status': str(elem.findtext('Status'))
                 }
                 unreachable_devices.append(dev_dict)
-                #print(dev_dict)
+                # print(dev_dict)
         return unreachable_devices
-
 
     def delete_multiple_devices(self, device_array):
         """ Deletes multiple devices by ID from CSPC
@@ -222,7 +216,7 @@ class CspcApi:
         """
 
         namespaces = {
-            'ns' : 'http://www.parinetworks.com/api/schemas/1.1'
+            'ns': 'http://www.parinetworks.com/api/schemas/1.1'
         }
         #  xmlns="http://www.parinetworks.com/api/schemas/1.1"
         payload = """<Request requestId="">
@@ -245,11 +239,10 @@ class CspcApi:
         with open(os.path.join(CspcApi.xml_request_dir, 'delete_multiple_devices.xml'), 'w') as f:
             f.write(ElementTree.tostring(tree, encoding='unicode'))
 
-        #return "noop"
+        # return "noop"
         return self._xml('delete_multiple_devices.xml')
 
-
-    def get_formatted_csv_device_entry(self, ipaddress, hostname='', username ='', password='', enable_password='', snmp_v2_RO ='', snmp_v2_RW =''):
+    def get_formatted_csv_device_entry(self, ipaddress, hostname='', username='', password='', enable_password='', snmp_v2_RO='', snmp_v2_RW=''):
         """
         Returns:
             str: single line of csv including trailing newline '\\n'
@@ -265,28 +258,28 @@ class CspcApi:
         col8_MDF_Type = ''
         col9_Snmp_RO = snmp_v2_RO
         col10_Snmp_RW = snmp_v2_RW
-        col11_SnmpV3_User_Name = '' #TODO
-        col12_Snmp_V3_Auth_Pass = '' #TODO
-        col13_Snmp_V3_Engine_ID = '' #TODO
-        col14_Snmp_V3_Auth_Algorithm = '' #TODO
+        col11_SnmpV3_User_Name = ''  # TODO
+        col12_Snmp_V3_Auth_Pass = ''  # TODO
+        col13_Snmp_V3_Engine_ID = ''  # TODO
+        col14_Snmp_V3_Auth_Algorithm = ''  # TODO
         col15_RX_Boot_Mode_User = ''
         col16_RX_Boot_Mode_Pass = ''
         col17_Primary_User_Tacacs_User = username
         col18_Primary_Pass_Tacacs_Pass = password
         col19_Primary_Enable_Pass = enable_password
-        col20_Http_User = '' #TODO
-        col21_Http_Pass = '' #TODO
-        col22_Http_Mode = '' #TODO
-        col23_Http_Port = '' #TODO
-        col24_Https_Port = '' #TODO
+        col20_Http_User = ''  # TODO
+        col21_Http_Pass = ''  # TODO
+        col22_Http_Mode = ''  # TODO
+        col23_Http_Port = ''  # TODO
+        col24_Https_Port = ''  # TODO
         col25_Cert_Common_Name = ''
         col26_Secondary_User = ''
         col27_Secondary_Pass = ''
         col28_Secondary_Enable_Pass = ''
         col29_Secondary_Http_User = ''
         col30_Secondary_Http_Pass = ''
-        col31_Snmp_V3_Priv_Algorithm = ''#TODO
-        col32_Snmp_V3_Priv_Pass = ''#TODO
+        col31_Snmp_V3_Priv_Algorithm = ''  # TODO
+        col32_Snmp_V3_Priv_Pass = ''  # TODO
         col33_User_Field_1 = ''
         col34_User_Field_2 = ''
         col35_User_Field_3 = ''
@@ -295,11 +288,10 @@ class CspcApi:
         return f'{col1_IP_Address_including_domain_or_simply_an_IP},{col2_Host_Name},{col3_Domain_Name},{col4_Device_Identity},{col5_Display_Name},{col6_SysObjectID},{col7_DCR_Device_Type},{col8_MDF_Type},{col9_Snmp_RO},{col10_Snmp_RW},{col11_SnmpV3_User_Name},{col12_Snmp_V3_Auth_Pass},{col13_Snmp_V3_Engine_ID},{col14_Snmp_V3_Auth_Algorithm},{col15_RX_Boot_Mode_User},{col16_RX_Boot_Mode_Pass},{col17_Primary_User_Tacacs_User},{col18_Primary_Pass_Tacacs_Pass},{col19_Primary_Enable_Pass},{col20_Http_User},{col21_Http_Pass},{col22_Http_Mode},{col23_Http_Port},{col24_Https_Port},{col25_Cert_Common_Name},{col26_Secondary_User},{col27_Secondary_Pass},{col28_Secondary_Enable_Pass},{col29_Secondary_Http_User},{col30_Secondary_Http_Pass},{col31_Snmp_V3_Priv_Algorithm},{col32_Snmp_V3_Priv_Pass},{col33_User_Field_1},{col34_User_Field_2},{col35_User_Field_3},{col36_User_Field_4}\n'
 
 
-
 def _setup_logging():
     format = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"
     # logfile='cspc.log'
-    logfile=None
+    logfile = None
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt="%H:%M:%S", filename=logfile)
 
@@ -311,7 +303,8 @@ if __name__ == '__main__':
     if len(sys.argv) != 2:
         exit(f'usage: ./{sys.argv[0]} CSPC_IP')
 
-    c = CspcApi(f'{sys.argv[1]}:8001', os.environ.get('CSPC_USER'), os.environ.get('CSPC_PASSWORD'), verify=False)
+    c = CspcApi(f'{sys.argv[1]}:8001', os.environ.get(
+        'CSPC_USER'), os.environ.get('CSPC_PASSWORD'), verify=False)
     c._info()
     # print(os.path.realpath(__file__))
     u = c.get_unreachable_devices()
