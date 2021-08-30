@@ -39,9 +39,6 @@ cspc = CspcApi('<IP of your CSPC server>', 'admin', 'admin_pass', verify=False)
 
 See also [Examples](examples/)
 
-### DevNet Sandbox
-
-A great way to make your repo easy for others to use is to provide a link to a [DevNet Sandbox](https://developer.cisco.com/site/sandbox/) that provides a network or other resources required to use this code. In addition to identifying an appropriate sandbox, be sure to provide instructions and any configuration necessary to run your code with the sandbox.
 
 ## How to test the software
 
@@ -61,7 +58,7 @@ Pull requests are welcome!
 
 Currently missing:
 - unit tests
-- integration testing with CSPC VM
+- guide how to perform integration testing with CSPC VM
 
 
 ## Author(s)
