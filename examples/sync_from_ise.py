@@ -21,7 +21,7 @@ deps = {
   'cisco-ise-ers-api': 'https://github.com/lumean/cisco-ise-ers-api.git'
 }
 for folder, origin in deps.items():
-    dep_path = os.path.join(os.path.dirname(__file__), '..', i)
+    dep_path = os.path.join(os.path.dirname(__file__), '..', folder)
     sys.path.append(dep_path)
     if not os.path.isdir(dep_path):
         print(f'Please ensure dependency is available at {dep_path}')
