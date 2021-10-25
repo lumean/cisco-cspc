@@ -52,7 +52,7 @@ class CspcApi:
         """Performs get request to the CSPC info API endpoint
 
         Returns:
-            str: response body of CSPC get /cspc/info 
+            str: response body of CSPC get /cspc/info
         """
         link = 'https://' + self.host + '/cspc/info'
 
@@ -95,7 +95,7 @@ class CspcApi:
 
     def _get_xml_payload(self, request_name):
         """Loads the full/skeleton xml request from an example file
-        
+
         Args:
             payload (str): xml file in the `xml_request_dir`
 
@@ -109,7 +109,7 @@ class CspcApi:
 
     def _get_xml_elem(self, path, elem_tree):
         """Loads the full/skeleton xml request from an example file
-        
+
         Args:
             path (str): tag name to search for
             elem_tree (xml.etree.ElementTree) : tree to search
@@ -123,7 +123,7 @@ class CspcApi:
             'ns': 'http://www.parinetworks.com/api/schemas/1.1'
         }
         return elem_tree.find(f'.//ns:{path}', namespaces=ns)
-        
+
 
     def send_and_import_seed_file_csv(self, csv, device_group_name):
         """ upload seedfile to CSPC
@@ -219,7 +219,7 @@ class CspcApi:
         """returns an array of dict with unreachable devices
 
         Returns:
-            list: of device dictionariers with keys: Id, HostName, IPAddress, Status 
+            list: of device dictionariers with keys: Id, HostName, IPAddress, Status
         """
         devices = self.get_devices()
 
@@ -243,15 +243,15 @@ class CspcApi:
         parent.append(d)
         return d
 
-    def add_multiple_device_credentials_ssh_snmp(self, credentials):
-        """Adds snmpv2c and sshv2 credentials for multiple devices by IP
+    def add_multiple_device_credentials_snmpv2c(self, credentials):
+        """Adds snmpv2c credentials for multiple devices by IP expression
 
         Args:
-            credentials (dict): key = IPaddress, value = dict(user=, password=, enable_password=, snmp_read_community=, snmp_write_community=)
-        
+            credentials (dict): key = credential_name, value = dict(ip_expression=, snmp_read_community=, snmp_write_community=)
+
         Returns:
             str: Response of CSPC
-        
+
         Example:
             This is an example payload for snmp or telnet credentials:
             ```<DeviceCredential identifier="My_snmpv1_1">
@@ -281,31 +281,75 @@ class CspcApi:
             ```
         """
         tree = ElementTree.fromstring(self._get_xml_payload('add_multiple_device_credentials.xml'))
-  
+
         cred_list = self._get_xml_elem('DeviceCredentialList', tree)
-        for ip, creds in credentials.items():
+        for cred_name, creds in credentials.items():
             # SNMPv2c credential
-            device_credential = ElementTree.Element('DeviceCredential', identifier=f'ise_{ip}_snmpv2c')
+            device_credential = ElementTree.Element('DeviceCredential', identifier=cred_name)
             self._add_elem_with_text('Protocol', 'snmpv2c', device_credential)
             self._add_elem_with_text('ReadCommunity', creds['snmp_read_community'], device_credential)
             self._add_elem_with_text('WriteCommunity',creds['snmp_write_community'], device_credential)
             ip_expr = ElementTree.Element('IpExpressionList')
-            self._add_elem_with_text('IpExpression', ip, ip_expr)
+            self._add_elem_with_text('IpExpression', creds['ip_expression'], ip_expr)
             device_credential.append(ip_expr)
             cred_list.append(device_credential)
 
+        return self._xml(ElementTree.tostring(tree, encoding='unicode'))
+
+    def add_multiple_device_credentials_ssh(self, credentials):
+        """Adds sshv2 credentials for multiple devices by IP expression
+
+        Args:
+            credentials (dict): key = credential_name, value = dict(ip_expression=, user=, password=, enable_password=)
+
+        Returns:
+            str: Response of CSPC
+
+        Example:
+            This is an example payload for snmp or telnet credentials:
+            ```<DeviceCredential identifier="My_snmpv1_1">
+                <Protocol>snmpv1</Protocol>
+                <WriteCommunity>private</WriteCommunity>
+                <IpExpressionList>
+                    <IpExpression>*.*.*.*</IpExpression>
+                </IpExpressionList>
+                <ExcludeIpExprList>
+                    <IpExpression>192.168.*.*IpExpression>
+                </ExcludeIpExprList>
+            </DeviceCredential>
+            <DeviceCredential identifier="My_telnet_1">
+                <Protocol>telnet</Protocol>
+                <UserName>admin</UserName>
+                <Password>admin</Password>
+                <EnableUserName>testuser</EnableUserName>
+                <EnablePassword>testpass</EnablePassword>
+                <IpExpressionList>
+                    <IpExpression>*.*.*.*</IpExpression>
+                    <IpExpression>FE80::0009</IpExpression>
+                </IpExpressionList>
+                <ExcludeIpExprList>
+                    <IpExpression>192.168.0.*</IpExpression>
+                </ExcludeIpExprList>
+            </DeviceCredential>
+            ```
+        """
+        tree = ElementTree.fromstring(self._get_xml_payload('add_multiple_device_credentials.xml'))
+
+        cred_list = self._get_xml_elem('DeviceCredentialList', tree)
+        for cred_name, creds in credentials.items():
             # SSHv2 credential
-            device_credential = ElementTree.Element('DeviceCredential', identifier=f'ise_{ip}_sshv2')
+            device_credential = ElementTree.Element('DeviceCredential', identifier=cred_name)
             self._add_elem_with_text('Protocol', 'sshv2', device_credential)
             self._add_elem_with_text('UserName', creds['user'], device_credential)
             self._add_elem_with_text('Password', creds['password'], device_credential)
             self._add_elem_with_text('EnablePassword', creds['enable_password'], device_credential)
             ip_expr = ElementTree.Element('IpExpressionList')
-            self._add_elem_with_text('IpExpression', ip, ip_expr)
+            self._add_elem_with_text('IpExpression', creds['ip_expression'], ip_expr)
             device_credential.append(ip_expr)
             cred_list.append(device_credential)
 
         return self._xml(ElementTree.tostring(tree, encoding='unicode'))
+
 
     def add_multiple_devices(self, devices):
         """Adds multiple devices by IP and Hostname
