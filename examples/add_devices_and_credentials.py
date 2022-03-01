@@ -34,10 +34,21 @@ ssh_credentials = {
 
     }
 }
-devices = {
-     '1.2.3.4': 'testhostname1',
-     '1.2.3.5': 'testhostname2',
-}
+devices = [
+    { 
+        'HostName': 'testhostname1', 
+        'IPAddress': '1.2.3.4', 
+        'DomainName': 'testhostname1.example.com', 
+        'PrimaryDeviceName': 'testhostname1.example.com',
+    },
+    { 
+        'HostName': 'testhostname2', 
+        'IPAddress': '1.2.3.5', 
+        'DomainName': 'testhostname2.example.com', 
+        'PrimaryDeviceName': 'testhostname2.example.com',
+    },
+]
+
 
 
 print(cspc.add_multiple_device_credentials_ssh(ssh_credentials))

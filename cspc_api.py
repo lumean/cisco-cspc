@@ -237,6 +237,40 @@ class CspcApi:
                 # print(dev_dict)
         return unreachable_devices
 
+
+    def get_devices_by(self, key, value):
+        """returns an array of dict with devices where the text attribute of the key element matches (case-sensitive) 
+        the given value with python 'in' operator
+
+        i.e. if value in device<key>...
+
+        For list of possible keys see #get_devices
+        
+        Args:
+            key (str): tag name to match
+            value (str):  tag contents to match against
+
+        Returns:
+            list: of device dictionariers with all keys from #get_devices
+
+        Example:
+        ```
+            # find all devices having 1.2.3. in their IP address
+            my_devices = cspc.get_devices_by('IPAddress', '1.2.3.')
+        ```
+        """
+        devices = self.get_devices()
+
+        self.logger.info('num devices: ' + str(len(devices)))
+        matched_devices = []
+        for device in devices:
+            if value in device.findtext(key) :
+                device_dict = {}
+                for child in device:
+                    device_dict[child.tag] =  str(device.findtext(child.tag))
+                matched_devices.append(device_dict)
+        return matched_devices
+
     def _add_elem_with_text(self, tag, text, parent):
         d = ElementTree.Element(tag)
         d.text = text
@@ -352,24 +386,30 @@ class CspcApi:
 
 
     def add_multiple_devices(self, devices):
-        """Adds multiple devices by IP and Hostname
+        """Adds multiple devices to CSPC.
+
+        Note: By default the IP Address is chosen as PrimaryDeviceName. PrimaryDeviceName is used
+        as 'Hostname' key by other Cisco Tools (SNTC, BCS). So if you need Hostname or FQDN name in
+        those tools, please specify the PrimaryDeviceName.
 
         Args:
-            devices (dict): key = IP address (can be either IPv4 or IPv6), value = Hostname
+            devices (list<dict>): list of device dictionaries. For valid keys see :func: `<get_devices>`
+            at minimum IPAddress is required.
 
         Returns:
             str: Response of CSPC
+
+        See also: examples/add_devices_and_credentials.py
         """
         tree = ElementTree.fromstring(self._get_xml_payload('add_multiple_devices.xml'))
         device_list = self._get_xml_elem('DeviceList', tree)
-        for ip, hostname in devices.items():
+        for device in devices:
             elem = ElementTree.Element('Device')
-            d = ElementTree.Element('IPAddress')
-            d.text = ip
-            elem.append(d)
-            d = ElementTree.Element('HostName')
-            d.text = hostname
-            elem.append(d)
+            for tag, value in device.items():
+                d = ElementTree.Element(tag)
+                d.text = value
+                elem.append(d)
+
             device_list.append(elem)
 
         return self._xml(ElementTree.tostring(tree, encoding='unicode'))
@@ -378,7 +418,7 @@ class CspcApi:
         """ Deletes multiple devices by ID from CSPC
 
         Args:
-            device_array (list): list of hashes, as returned by :func: `<unreachable_devices>`
+            device_array (list): list of dictionaries, as returned by :func: `<unreachable_devices>`
 
         Returns:
             str: Response of CSPC

@@ -61,7 +61,7 @@ def load_ise_devices_from_json():
 all_devices = export_all_ise_devices()
 # all_devices = load_devices_from_json()
 
-ip_hostnames = dict()
+
 
 ssh_credentials = {
     'ise_*.*.*.*_sshv2': {
@@ -105,6 +105,8 @@ def print_exclude_reason(reason, device):
                 + str(device['NetworkDeviceIPList']) + ' profile ' + device['profileName']
                 + ' ' + str(device['NetworkDeviceGroupList']))
 
+devices_to_sync = list()
+
 num_wlc = 0
 for device in all_devices:
     skip = False
@@ -142,7 +144,12 @@ for device in all_devices:
             break
 
         # good to sync, add to device list
-        ip_hostnames[ip_mask['ipaddress']] = device['name']
+        cscp_device = { 
+            'HostName': device['name'], 
+            'IPAddress': ip_mask['ipaddress'], 
+            'PrimaryDeviceName': device['name'],
+        }
+        devices_to_sync.append(cscp_device)
 
         # example how to match on specific device type string:
         for string in device['NetworkDeviceGroupList']:
@@ -151,15 +158,16 @@ for device in all_devices:
 
 cspc = CspcApi('10.10.10.10', cspc_user, cspc_pass, verify=False)
 print(len(all_devices), 'Devices in ISE (multiple IP per device possible)')
-print(len(ip_hostnames), 'Devices IP to sync')
+print(len(devices_to_sync), 'Devices IP to sync')
 print(num_wlc, 'WLCs')
 
 print(cspc.add_multiple_device_credentials_ssh(ssh_credentials))
 print(cspc.add_multiple_device_credentials_snmpv2c(snmp_credentials))
 
-cspc.add_multiple_devices(ip_hostnames)
+cspc.add_multiple_devices(devices_to_sync)
 
 unreachable = cspc.get_unreachable_devices()
+ip_list = [d['IPAddress'] for d in devices_to_sync]
 
 not_in_ise = []
 for device in unreachable:
@@ -172,7 +180,7 @@ for device in unreachable:
         # socket.herror: [Errno 11004] host not found
         dns_name = 'no reverse DNS found'
 
-    if device['IPAddress'] not in ip_hostnames:
+    if device['IPAddress'] not in ip_list:
         print('{}, {}, not found in ISE'.format(device['IPAddress'], dns_name))
         not_in_ise.append(device)
 
