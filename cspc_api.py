@@ -7,46 +7,43 @@ import os
 import sys
 import time
 from xml.etree import ElementTree
+import urllib3
 import requests
 
 
 class CspcApi:
+    """XML API Client Class for CSPC"""
 
-    xml_request_dir = os.path.join(os.path.realpath(
-        os.path.dirname(__file__)), 'xml_requests')
+    xml_request_dir = os.path.join(os.path.realpath(os.path.dirname(__file__)), "xml_requests")
 
-    ElementTree.register_namespace('', 'http://www.parinetworks.com/api/schemas/1.1')
+    ElementTree.register_namespace("", "http://www.parinetworks.com/api/schemas/1.1")
 
-    def __init__(self, host, user, pwd, verify):
-        '''
+    def __init__(self, host, user, pwd, verify, port=8001):
+        """
 
         Args:
             host (str): IP or hostname (without https://) of CSPC
             user (str): Username for ers API
             password (str): Password for ers API user
             verify (bool): enable / disable certificate check for requests to CSPC.
-        '''
+        """
 
-        self.logger = logging.getLogger('CspcApi')
-        self.host = host + ':8001'
+        self.logger = logging.getLogger("CspcApi")
+        self.host = host + ":" + str(port)
         self.user = user
         self.password = pwd
-        self.creds = ':'.join([self.user, self.password])
-        self.encodedAuth = base64.b64encode(self.creds.encode('utf-8'))
+        self.creds = ":".join([self.user, self.password])
+        self.encodedAuth = base64.b64encode(self.creds.encode("utf-8"))
 
         if not verify:
-            import urllib3
             urllib3.disable_warnings()
 
         self.headers = {
             # 'accept': 'application/xml',
-            'Authorization': ' '.join(['Basic', self.encodedAuth.decode('utf-8')]),
-            'cache-control': 'no-cache',
+            "Authorization": " ".join(["Basic", self.encodedAuth.decode("utf-8")]),
+            "cache-control": "no-cache",
         }
-        self.kwargs = {
-            'verify': verify,
-            'headers': self.headers
-        }
+        self.kwargs = {"verify": verify, "headers": self.headers}
 
     def _info(self):
         """Performs get request to the CSPC info API endpoint
@@ -54,18 +51,18 @@ class CspcApi:
         Returns:
             str: response body of CSPC get /cspc/info
         """
-        link = 'https://' + self.host + '/cspc/info'
+        link = "https://" + self.host + "/cspc/info"
 
-        self.logger.debug('GET ' + link + '\nRequest Headers: ' + str(self.headers))
+        self.logger.debug("GET " + link + "\nRequest Headers: " + str(self.headers))
         response = requests.get(link, **self.kwargs)
         response_headers = response.headers
-        self.logger.debug('Response Headers:\n' + str(response_headers))
+        self.logger.debug("Response Headers:\n" + str(response_headers))
         body = response.text
-        self.logger.debug('Response Body:\n' + body)
+        self.logger.debug("Response Body:\n" + body)
         return body
 
     def _xml(self, payload):
-        """ Performs POST xml request to CSPC
+        """Performs POST xml request to CSPC
 
         Args:
             payload (str): string, use _get_xml_payload() to load content from `xml_request_dir`
@@ -79,16 +76,16 @@ class CspcApi:
             all_devices = self._xml(payload)
             tree = ElementTree.fromstring(all_devices)
         """
-        link = 'https://' + self.host + '/cspc/xml'
+        link = "https://" + self.host + "/cspc/xml"
 
-        self.logger.debug('POST ' + link +
-                          '\nRequest Headers: ' + str(self.headers) +
-                          '\nRequest Body: ' + str(payload))
+        self.logger.debug(
+            "POST " + link + "\nRequest Headers: " + str(self.headers) + "\nRequest Body: " + str(payload)
+        )
         response = requests.post(link, payload, **self.kwargs)
         response_headers = response.headers
         body = response.text
-        self.logger.debug('Response Headers:\n' + str(response_headers))
-        self.logger.debug('Response Body:\n' + body)
+        self.logger.debug("Response Headers:\n" + str(response_headers))
+        self.logger.debug("Response Body:\n" + body)
         if response.status_code != 200:
             raise RuntimeError(response)
         return body
@@ -103,7 +100,7 @@ class CspcApi:
             str: xml from file string
         """
         path = os.path.join(CspcApi.xml_request_dir, request_name)
-        with open(path, 'r') as f:
+        with open(path, "r", encoding="utf-8") as f:
             payload = f.read()
         return payload
 
@@ -119,14 +116,11 @@ class CspcApi:
         """
         # https://docs.python.org/3/library/xml.etree.elementtree.html
         # xml library will prefix all elements with their NS from a parsed file.
-        ns = {
-            'ns': 'http://www.parinetworks.com/api/schemas/1.1'
-        }
-        return elem_tree.find(f'.//ns:{path}', namespaces=ns)
-
+        ns = {"ns": "http://www.parinetworks.com/api/schemas/1.1"}
+        return elem_tree.find(f".//ns:{path}", namespaces=ns)
 
     def send_and_import_seed_file_csv(self, csv, device_group_name):
-        """ upload seedfile to CSPC
+        """upload seedfile to CSPC
 
         Args:
             csv (str): csv formatted list of devices to add
@@ -157,26 +151,24 @@ class CspcApi:
         </Request>
         """
 
-        link = 'https://' + self.host + '/cspc/seedfile'
+        link = "https://" + self.host + "/cspc/seedfile"
 
-        files = {'request': (None, xmlrequest.encode('utf8')), 'file': (
-            seed_file_name, csv.encode('utf8'))}
+        files = {"request": (None, xmlrequest.encode("utf8")), "file": (seed_file_name, csv.encode("utf8"))}
 
         response = requests.post(link, files=files, headers=self.headers, verify=False)
 
-        self.logger.debug('POST ' + link +
-                          '\nRequest Headers: ' + str(self.headers) +
-                          '\nRequest Body: ' + str(files))
+        self.logger.debug("POST " + link + "\nRequest Headers: " + str(self.headers) + "\nRequest Body: " + str(files))
 
         response_headers = response.headers
-        self.logger.debug('Response Headers:\n' + str(response_headers))
+        self.logger.debug("Response Headers:\n" + str(response_headers))
         body = response.text
-        self.logger.debug('Response Body:\n' + body)
+        self.logger.debug("Response Body:\n" + body)
 
         return body
 
     def get_devices(self):
-        """returns an array of dict with all registered devices
+        """Returns all registered devices as list of xml Elementes
+
         Returns:
             list: of XML Elements
 
@@ -207,13 +199,30 @@ class CspcApi:
             </Device>
         ```
         """
-        all_devices = self._xml(self._get_xml_payload('get_details_of_all_devices.xml'))
+        all_devices = self._xml(self._get_xml_payload("get_details_of_all_devices.xml"))
         tree = ElementTree.fromstring(all_devices)
-        devices = tree.findall('.//Device')
+        devices = tree.findall(".//Device")
 
-        self.logger.info('num devices: ' + str(len(devices)))
+        self.logger.info("num devices: " + str(len(devices)))
 
         return devices
+
+    def get_devices_as_dict(self):
+        """Returns all registered devices as list of python dictionaries
+
+        Returns:
+            list: of dicts,  see :func: `<get_devices>`  for possible dict keys
+
+        """
+        devices = self.get_devices()
+        list_of_dict = []
+        for device_elem in devices:
+            device_dict = {}
+            for elem in device_elem:
+                device_dict[elem.tag] = elem.text
+            list_of_dict.append(device_dict)
+
+        return list_of_dict
 
     def get_unreachable_devices(self):
         """returns an array of dict with unreachable devices
@@ -223,29 +232,28 @@ class CspcApi:
         """
         devices = self.get_devices()
 
-        self.logger.info('num devices: ' + str(len(devices)))
+        self.logger.info("num devices: " + str(len(devices)))
         unreachable_devices = []
         for elem in devices:
-            if elem.findtext('Status').lower() != 'reachable':
+            if elem.findtext("Status").lower() != "reachable":
                 dev_dict = {
-                    'Id': str(elem.findtext('Id')),
-                    'HostName': str(elem.findtext('HostName')),
-                    'IPAddress': str(elem.findtext('IPAddress')),
-                    'Status': str(elem.findtext('Status'))
+                    "Id": str(elem.findtext("Id")),
+                    "HostName": str(elem.findtext("HostName")),
+                    "IPAddress": str(elem.findtext("IPAddress")),
+                    "Status": str(elem.findtext("Status")),
                 }
                 unreachable_devices.append(dev_dict)
                 # print(dev_dict)
         return unreachable_devices
 
-
     def get_devices_by(self, key, value):
-        """returns an array of dict with devices where the text attribute of the key element matches (case-sensitive) 
+        """returns an array of dict with devices where the text attribute of the key element matches (case-sensitive)
         the given value with python 'in' operator
 
         i.e. if value in device<key>...
 
         For list of possible keys see #get_devices
-        
+
         Args:
             key (str): tag name to match
             value (str):  tag contents to match against
@@ -261,13 +269,13 @@ class CspcApi:
         """
         devices = self.get_devices()
 
-        self.logger.info('num devices: ' + str(len(devices)))
+        self.logger.info("num devices: " + str(len(devices)))
         matched_devices = []
         for device in devices:
-            if value in device.findtext(key) :
+            if value in device.findtext(key):
                 device_dict = {}
                 for child in device:
-                    device_dict[child.tag] =  str(device.findtext(child.tag))
+                    device_dict[child.tag] = str(device.findtext(child.tag))
                 matched_devices.append(device_dict)
         return matched_devices
 
@@ -314,21 +322,21 @@ class CspcApi:
             </DeviceCredential>
             ```
         """
-        tree = ElementTree.fromstring(self._get_xml_payload('add_multiple_device_credentials.xml'))
+        tree = ElementTree.fromstring(self._get_xml_payload("add_multiple_device_credentials.xml"))
 
-        cred_list = self._get_xml_elem('DeviceCredentialList', tree)
+        cred_list = self._get_xml_elem("DeviceCredentialList", tree)
         for cred_name, creds in credentials.items():
             # SNMPv2c credential
-            device_credential = ElementTree.Element('DeviceCredential', identifier=cred_name)
-            self._add_elem_with_text('Protocol', 'snmpv2c', device_credential)
-            self._add_elem_with_text('ReadCommunity', creds['snmp_read_community'], device_credential)
-            self._add_elem_with_text('WriteCommunity',creds['snmp_write_community'], device_credential)
-            ip_expr = ElementTree.Element('IpExpressionList')
-            self._add_elem_with_text('IpExpression', creds['ip_expression'], ip_expr)
+            device_credential = ElementTree.Element("DeviceCredential", identifier=cred_name)
+            self._add_elem_with_text("Protocol", "snmpv2c", device_credential)
+            self._add_elem_with_text("ReadCommunity", creds["snmp_read_community"], device_credential)
+            self._add_elem_with_text("WriteCommunity", creds["snmp_write_community"], device_credential)
+            ip_expr = ElementTree.Element("IpExpressionList")
+            self._add_elem_with_text("IpExpression", creds["ip_expression"], ip_expr)
             device_credential.append(ip_expr)
             cred_list.append(device_credential)
 
-        return self._xml(ElementTree.tostring(tree, encoding='unicode'))
+        return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
     def add_multiple_device_credentials_ssh(self, credentials):
         """Adds sshv2 credentials for multiple devices by IP expression
@@ -367,23 +375,22 @@ class CspcApi:
             </DeviceCredential>
             ```
         """
-        tree = ElementTree.fromstring(self._get_xml_payload('add_multiple_device_credentials.xml'))
+        tree = ElementTree.fromstring(self._get_xml_payload("add_multiple_device_credentials.xml"))
 
-        cred_list = self._get_xml_elem('DeviceCredentialList', tree)
+        cred_list = self._get_xml_elem("DeviceCredentialList", tree)
         for cred_name, creds in credentials.items():
             # SSHv2 credential
-            device_credential = ElementTree.Element('DeviceCredential', identifier=cred_name)
-            self._add_elem_with_text('Protocol', 'sshv2', device_credential)
-            self._add_elem_with_text('UserName', creds['user'], device_credential)
-            self._add_elem_with_text('Password', creds['password'], device_credential)
-            self._add_elem_with_text('EnablePassword', creds['enable_password'], device_credential)
-            ip_expr = ElementTree.Element('IpExpressionList')
-            self._add_elem_with_text('IpExpression', creds['ip_expression'], ip_expr)
+            device_credential = ElementTree.Element("DeviceCredential", identifier=cred_name)
+            self._add_elem_with_text("Protocol", "sshv2", device_credential)
+            self._add_elem_with_text("UserName", creds["user"], device_credential)
+            self._add_elem_with_text("Password", creds["password"], device_credential)
+            self._add_elem_with_text("EnablePassword", creds["enable_password"], device_credential)
+            ip_expr = ElementTree.Element("IpExpressionList")
+            self._add_elem_with_text("IpExpression", creds["ip_expression"], ip_expr)
             device_credential.append(ip_expr)
             cred_list.append(device_credential)
 
-        return self._xml(ElementTree.tostring(tree, encoding='unicode'))
-
+        return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
     def add_multiple_devices(self, devices):
         """Adds multiple devices to CSPC.
@@ -401,10 +408,10 @@ class CspcApi:
 
         See also: examples/add_devices_and_credentials.py
         """
-        tree = ElementTree.fromstring(self._get_xml_payload('add_multiple_devices.xml'))
-        device_list = self._get_xml_elem('DeviceList', tree)
+        tree = ElementTree.fromstring(self._get_xml_payload("add_multiple_devices.xml"))
+        device_list = self._get_xml_elem("DeviceList", tree)
         for device in devices:
-            elem = ElementTree.Element('Device')
+            elem = ElementTree.Element("Device")
             for tag, value in device.items():
                 d = ElementTree.Element(tag)
                 d.text = value
@@ -412,10 +419,33 @@ class CspcApi:
 
             device_list.append(elem)
 
-        return self._xml(ElementTree.tostring(tree, encoding='unicode'))
+        return self._xml(ElementTree.tostring(tree, encoding="unicode"))
+
+    def modify_multiple_devices(self, devices):
+        """Modifies multiple devices
+
+        Args:
+            devices (list<dict>): list of device dictionaries. For valid keys see :func: `<get_devices>`
+            at minimum IPAddress is required.
+
+        Returns:
+            str: Response of CSPC
+        """
+        tree = ElementTree.fromstring(self._get_xml_payload("modify_multiple_devices.xml"))
+        device_list = self._get_xml_elem("DeviceList", tree)
+        for device in devices:
+            elem = ElementTree.Element("Device")
+            for tag, value in device.items():
+                d = ElementTree.Element(tag)
+                d.text = value
+                elem.append(d)
+
+            device_list.append(elem)
+
+        return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
     def delete_multiple_devices(self, device_array):
-        """ Deletes multiple devices by ID from CSPC
+        """Deletes multiple devices by ID from CSPC
 
         Args:
             device_array (list): list of dictionaries, as returned by :func: `<unreachable_devices>`
@@ -423,18 +453,20 @@ class CspcApi:
         Returns:
             str: Response of CSPC
         """
-        tree = ElementTree.fromstring(self._get_xml_payload('delete_multiple_devices.xml'))
-        device_list = self._get_xml_elem('DeviceList', tree)
+        tree = ElementTree.fromstring(self._get_xml_payload("delete_multiple_devices.xml"))
+        device_list = self._get_xml_elem("DeviceList", tree)
         for dev in device_array:
-            elem = ElementTree.Element('Device')
-            d = ElementTree.Element('Id')
-            d.text = dev['Id']
+            elem = ElementTree.Element("Device")
+            d = ElementTree.Element("Id")
+            d.text = dev["Id"]
             elem.append(d)
             device_list.append(elem)
 
-        return self._xml(ElementTree.tostring(tree, encoding='unicode'))
+        return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
-    def get_formatted_csv_device_entry(self, ipaddress, hostname='', username='', password='', enable_password='', snmp_v2_RO='', snmp_v2_RW=''):
+    def get_formatted_csv_device_entry(
+        self, ipaddress, hostname="", username="", password="", enable_password="", snmp_v2_RO="", snmp_v2_RW=""
+    ):
         """
         Returns:
             str: single line of csv including trailing newline '\\n'
@@ -442,61 +474,59 @@ class CspcApi:
         """
         col1_IP_Address_including_domain_or_simply_an_IP = ipaddress
         col2_Host_Name = hostname
-        col3_Domain_Name = ''
-        col4_Device_Identity = ''
-        col5_Display_Name = ''
-        col6_SysObjectID = ''
-        col7_DCR_Device_Type = ''
-        col8_MDF_Type = ''
+        col3_Domain_Name = ""
+        col4_Device_Identity = ""
+        col5_Display_Name = ""
+        col6_SysObjectID = ""
+        col7_DCR_Device_Type = ""
+        col8_MDF_Type = ""
         col9_Snmp_RO = snmp_v2_RO
         col10_Snmp_RW = snmp_v2_RW
-        col11_SnmpV3_User_Name = ''  # TODO
-        col12_Snmp_V3_Auth_Pass = ''  # TODO
-        col13_Snmp_V3_Engine_ID = ''  # TODO
-        col14_Snmp_V3_Auth_Algorithm = ''  # TODO
-        col15_RX_Boot_Mode_User = ''
-        col16_RX_Boot_Mode_Pass = ''
+        col11_SnmpV3_User_Name = ""  # TODO
+        col12_Snmp_V3_Auth_Pass = ""  # TODO
+        col13_Snmp_V3_Engine_ID = ""  # TODO
+        col14_Snmp_V3_Auth_Algorithm = ""  # TODO
+        col15_RX_Boot_Mode_User = ""
+        col16_RX_Boot_Mode_Pass = ""
         col17_Primary_User_Tacacs_User = username
         col18_Primary_Pass_Tacacs_Pass = password
         col19_Primary_Enable_Pass = enable_password
-        col20_Http_User = ''  # TODO
-        col21_Http_Pass = ''  # TODO
-        col22_Http_Mode = ''  # TODO
-        col23_Http_Port = ''  # TODO
-        col24_Https_Port = ''  # TODO
-        col25_Cert_Common_Name = ''
-        col26_Secondary_User = ''
-        col27_Secondary_Pass = ''
-        col28_Secondary_Enable_Pass = ''
-        col29_Secondary_Http_User = ''
-        col30_Secondary_Http_Pass = ''
-        col31_Snmp_V3_Priv_Algorithm = ''  # TODO
-        col32_Snmp_V3_Priv_Pass = ''  # TODO
-        col33_User_Field_1 = ''
-        col34_User_Field_2 = ''
-        col35_User_Field_3 = ''
-        col36_User_Field_4 = ''
+        col20_Http_User = ""  # TODO
+        col21_Http_Pass = ""  # TODO
+        col22_Http_Mode = ""  # TODO
+        col23_Http_Port = ""  # TODO
+        col24_Https_Port = ""  # TODO
+        col25_Cert_Common_Name = ""
+        col26_Secondary_User = ""
+        col27_Secondary_Pass = ""
+        col28_Secondary_Enable_Pass = ""
+        col29_Secondary_Http_User = ""
+        col30_Secondary_Http_Pass = ""
+        col31_Snmp_V3_Priv_Algorithm = ""  # TODO
+        col32_Snmp_V3_Priv_Pass = ""  # TODO
+        col33_User_Field_1 = ""
+        col34_User_Field_2 = ""
+        col35_User_Field_3 = ""
+        col36_User_Field_4 = ""
 
-        return f'{col1_IP_Address_including_domain_or_simply_an_IP},{col2_Host_Name},{col3_Domain_Name},{col4_Device_Identity},{col5_Display_Name},{col6_SysObjectID},{col7_DCR_Device_Type},{col8_MDF_Type},{col9_Snmp_RO},{col10_Snmp_RW},{col11_SnmpV3_User_Name},{col12_Snmp_V3_Auth_Pass},{col13_Snmp_V3_Engine_ID},{col14_Snmp_V3_Auth_Algorithm},{col15_RX_Boot_Mode_User},{col16_RX_Boot_Mode_Pass},{col17_Primary_User_Tacacs_User},{col18_Primary_Pass_Tacacs_Pass},{col19_Primary_Enable_Pass},{col20_Http_User},{col21_Http_Pass},{col22_Http_Mode},{col23_Http_Port},{col24_Https_Port},{col25_Cert_Common_Name},{col26_Secondary_User},{col27_Secondary_Pass},{col28_Secondary_Enable_Pass},{col29_Secondary_Http_User},{col30_Secondary_Http_Pass},{col31_Snmp_V3_Priv_Algorithm},{col32_Snmp_V3_Priv_Pass},{col33_User_Field_1},{col34_User_Field_2},{col35_User_Field_3},{col36_User_Field_4}\n'
+        return f"{col1_IP_Address_including_domain_or_simply_an_IP},{col2_Host_Name},{col3_Domain_Name},{col4_Device_Identity},{col5_Display_Name},{col6_SysObjectID},{col7_DCR_Device_Type},{col8_MDF_Type},{col9_Snmp_RO},{col10_Snmp_RW},{col11_SnmpV3_User_Name},{col12_Snmp_V3_Auth_Pass},{col13_Snmp_V3_Engine_ID},{col14_Snmp_V3_Auth_Algorithm},{col15_RX_Boot_Mode_User},{col16_RX_Boot_Mode_Pass},{col17_Primary_User_Tacacs_User},{col18_Primary_Pass_Tacacs_Pass},{col19_Primary_Enable_Pass},{col20_Http_User},{col21_Http_Pass},{col22_Http_Mode},{col23_Http_Port},{col24_Https_Port},{col25_Cert_Common_Name},{col26_Secondary_User},{col27_Secondary_Pass},{col28_Secondary_Enable_Pass},{col29_Secondary_Http_User},{col30_Secondary_Http_Pass},{col31_Snmp_V3_Priv_Algorithm},{col32_Snmp_V3_Priv_Pass},{col33_User_Field_1},{col34_User_Field_2},{col35_User_Field_3},{col36_User_Field_4}\n"
 
 
 def _setup_logging():
-    format = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"
+    fmt = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"
     # logfile='cspc.log'
     logfile = None
-    logging.basicConfig(format=format, level=logging.INFO,
-                        datefmt="%H:%M:%S", filename=logfile)
+    logging.basicConfig(format=fmt, level=logging.INFO, datefmt="%H:%M:%S", filename=logfile)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     _setup_logging()
-    if 'CSPC_USER' not in os.environ or 'CSPC_PASSWORD' not in os.environ:
-        exit('make sure environment variables `CSPC_USER` and `CSPC_PASSWORD` are defined')
+    if "CSPC_USER" not in os.environ or "CSPC_PASSWORD" not in os.environ:
+        exit("make sure environment variables `CSPC_USER` and `CSPC_PASSWORD` are defined")
     if len(sys.argv) != 2:
-        exit(f'usage: ./{sys.argv[0]} CSPC_IP')
+        exit(f"usage: ./{sys.argv[0]} CSPC_IP")
 
-    c = CspcApi(f'{sys.argv[1]}:8001', os.environ.get(
-        'CSPC_USER'), os.environ.get('CSPC_PASSWORD'), verify=False)
+    c = CspcApi(f"{sys.argv[1]}:8001", os.environ.get("CSPC_USER"), os.environ.get("CSPC_PASSWORD"), verify=False)
     c._info()
     # print(os.path.realpath(__file__))
     u = c.get_unreachable_devices()
