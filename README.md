@@ -178,7 +178,7 @@ pip install -r requirements-dev.txt
 
 cd tests
 # change seetings below to fit your setup
-cat >> cspc.env <EOF
+cat > cspc.env << EOF
 CSPC_USER=admin
 CSPC_PASS=<adminpass>
 CSPC_HOST=localhost

@@ -7,8 +7,9 @@ import os
 import sys
 import time
 from xml.etree import ElementTree
-import urllib3
+
 import requests
+import urllib3
 
 
 class CspcApi:
@@ -448,7 +449,8 @@ class CspcApi:
         """Deletes multiple devices by ID from CSPC
 
         Args:
-            device_array (list): list of dictionaries, as returned by :func: `<unreachable_devices>`
+            device_array (list): list of dictionaries, as returned by :func: `<unreachable_devices>` or
+                                 :func: `<get_devices_as_dict>`. Each dict needs at least an 'Id' key.
 
         Returns:
             str: Response of CSPC

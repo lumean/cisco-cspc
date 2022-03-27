@@ -1,13 +1,12 @@
+import logging
 import os
 import sys
-import logging
 
 from dotenv import load_dotenv
 
 base_dir = os.path.join(os.path.dirname(__file__), "..")
 sys.path.append(base_dir)
 from cspc_api import CspcApi
-
 
 fmt = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"
 logfile = "log.txt"
@@ -56,12 +55,30 @@ devices = [
     },
 ]
 
+print("\ncleanup existing devices first:")
+all_devices = cspc.get_devices_as_dict()
+print(all_devices)
+print(cspc.delete_multiple_devices(all_devices))
 
+print("\nadd some credentials:")
 print(cspc.add_multiple_device_credentials_ssh(ssh_credentials))
 print(cspc.add_multiple_device_credentials_snmpv2c(snmp_credentials))
 
+print("\nadd devices:")
 print(cspc.add_multiple_devices(devices))
 
-print(cspc.get_devices_as_dict())
+print("\nmodify devices:")
+all_devices = cspc.get_devices_as_dict()
+print(all_devices)
+for dev in all_devices:
+    dev["PrimaryDeviceName"] = dev["IPAddress"]
 
-# print(cspc.delete_multiple_devices([{'Id': '63'}]))
+print(cspc.modify_multiple_devices(all_devices))
+print("\ncheck after modify devices:")
+all_devices = cspc.get_devices_as_dict()
+print(all_devices)
+
+print("\ndelete non-existing device:")
+print(cspc.delete_multiple_devices([{"Id": "63"}]))
+print("\ndelete all devices:")
+print(cspc.delete_multiple_devices(all_devices))
