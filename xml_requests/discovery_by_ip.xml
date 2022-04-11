@@ -1,0 +1,24 @@
+<Request xmlns="http://www.parinetworks.com/api/schemas/1.1" requestId="3333">
+  <Job>
+    <Schedule operationId="1">
+      <JobSchedule runnow="true" />
+      <DiscoveryJob identifier="myXmlApiDiscovery">
+      <DiscoveryOptionsList>
+        <DiscoveryOptions>
+          <IPAddressList>
+            <!--IPAddress>172.0.0.1</IPAddress-->
+          </IPAddressList>
+          <MgmtProtocolList>
+            <!--MgmtProtocol>snmpv2c</MgmtProtocol>
+            <MgmtProtocol>snmpv3</MgmtProtocol-->
+          </MgmtProtocolList>
+          <DAVProtocolList>
+            <!--DAVProtocol>snmpv2c</DAVProtocol>
+            <DAVProtocol>snmpv3</DAVProtocol-->
+          </DAVProtocolList>
+        </DiscoveryOptions>
+        </DiscoveryOptionsList>
+      </DiscoveryJob>
+    </Schedule>
+  </Job>
+</Request>

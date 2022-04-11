@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 import time
+from dis import dis
 from xml.etree import ElementTree
 
 import requests
@@ -91,6 +92,36 @@ class CspcApi:
             raise RuntimeError(response)
         return body
 
+    def _to_dict(self, xml_tree, result_dict=None):
+        """Recursively Converts an xml element tree to a dictionary.
+
+        Attributes are converted to a dict under the "_attributes" key.
+
+        Args:
+            xml_element (xml.etree.Tree):
+            result_dict: only needed during recursion
+
+        Returns
+            dict
+        """
+        if result_dict is None:
+            result_dict = {}
+        for elem in xml_tree:
+            result_dict["_attributes"] = elem.attrib
+            # check if it has child elements
+            if len(elem) > 0:
+                child_dict = {}
+                self._to_dict(elem, child_dict)
+                result_dict[elem.tag] = child_dict
+            else:
+                result_dict[elem.tag] = elem.text
+        return result_dict
+
+    def response_as_dict(self, api_response_text):
+        """Converts the response text (usually xml) to a dict"""
+        tree = ElementTree.fromstring(api_response_text)
+        return self._to_dict(tree)
+
     def _get_xml_payload(self, request_name):
         """Loads the full/skeleton xml request from an example file
 
@@ -106,7 +137,10 @@ class CspcApi:
         return payload
 
     def _get_xml_elem(self, path, elem_tree):
-        """Loads the full/skeleton xml request from an example file
+        """Search in a loaded XML for a specific subtree tag
+
+        This assumes namespace  {"ns": "http://www.parinetworks.com/api/schemas/1.1"}
+        and search by .//ns:<path>
 
         Args:
             path (str): tag name to search for
@@ -464,6 +498,76 @@ class CspcApi:
             elem.append(d)
             device_list.append(elem)
 
+        return self._xml(ElementTree.tostring(tree, encoding="unicode"))
+
+    def discovery_by_ip(self, device_array, protocol_list=["snmpv2c"]):  # pylint: disable=dangerous-default-value
+        """Discovers multiple devices by IP address and tries given list of protocols.
+
+        Note: discovery can take a long time. E.g. 5k devices will take up to 50 minutes.
+        You might want to poll the discovery job for state == Completed.
+
+        Args:
+            device_array (list): list of dictionaries, as returned by :func: `<get_devices_as_dict>`.
+                                 Each dict needs at least an 'IPAddress' key.
+            protocol_list (list):
+        Returns:
+            str: Response of CSPC
+        """
+        tree = ElementTree.fromstring(self._get_xml_payload("discovery_by_ip.xml"))
+        discovery_job = self._get_xml_elem("DiscoveryJob", tree)
+        # make sure discoveryjob has a unique identifier by appending current time in ms.
+        discovery_job.set("identifier", f"XmlApiDiscovery{int(time.time()*1000)}")
+        ip_address_list = self._get_xml_elem("IPAddressList", tree)
+        for dev in device_array:
+            elem = ElementTree.Element("IPAddress")
+            elem.text = dev["IPAddress"]
+            ip_address_list.append(elem)
+
+        for discovery_proto in protocol_list:
+            proto_list = self._get_xml_elem("MgmtProtocolList", tree)
+            elem = ElementTree.Element("MgmtProtocol")
+            elem.text = discovery_proto
+            proto_list.append(elem)
+            proto_list = self._get_xml_elem("DAVProtocolList", tree)
+            elem = ElementTree.Element("DAVProtocol")
+            elem.text = discovery_proto
+            proto_list.append(elem)
+
+        return self._xml(ElementTree.tostring(tree, encoding="unicode"))
+
+    def get_job_by_id(self, job_id):
+        """Discovers multiple devices by IP address and SNMPv2c or SNMPv3 Protocol.
+
+        Args:
+            job_id (int): the CSPC job id, e.g. as in the response of :func: `<discovery_by_ip_and_snmp>`.
+        Returns:
+            str: Response of CSPC
+        """
+        tree = ElementTree.fromstring(self._get_xml_payload("get_job_list.xml"))
+        job_list = self._get_xml_elem("GetJobList", tree)
+        elem = ElementTree.Element("JobId")
+        elem.text = str(job_id)
+        job_list.append(elem)
+        return self._xml(ElementTree.tostring(tree, encoding="unicode"))
+
+    def get_job_status(self, job_id, run_id):
+        """Discovers multiple devices by IP address and SNMPv2c or SNMPv3 Protocol.
+
+        Args:
+            job_id (int): the CSPC job id, e.g. as in the response of :func: `<discovery_by_ip_and_snmp>`.
+            run_id (int): the CSPC job id, e.g. as in the response of :func: `<get_job_by_id>`.
+
+        Returns:
+            str: Response of CSPC
+        """
+        tree = ElementTree.fromstring(self._get_xml_payload("get_job_status.xml"))
+        job_list = self._get_xml_elem("GetStatus", tree)
+        elem = ElementTree.Element("JobId")
+        elem.text = str(job_id)
+        job_list.append(elem)
+        elem = ElementTree.Element("JobRunId")
+        elem.text = str(run_id)
+        job_list.append(elem)
         return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
     def get_formatted_csv_device_entry(

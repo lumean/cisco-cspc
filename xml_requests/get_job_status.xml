@@ -1,0 +1,8 @@
+<Request xmlns="http://www.parinetworks.com/api/schemas/1.1" requestId="3333">
+  <Job>
+      <GetStatus operationId="1">
+          <!--JobId>1</JobId>
+          <JobRunId>1</JobRunId-->
+      </GetStatus>
+  </Job>
+</Request>
