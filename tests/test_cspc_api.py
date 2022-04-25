@@ -57,6 +57,7 @@ devices = [
     },
 ]
 
+
 print("\ncleanup existing devices first:")
 all_devices = cspc.get_devices_as_dict()
 print(all_devices)
@@ -76,6 +77,7 @@ for dev in all_devices:
     dev["PrimaryDeviceName"] = dev["IPAddress"]
 
 print(cspc.modify_multiple_devices(all_devices))
+
 print("\ncheck after modify devices:")
 all_devices = cspc.get_devices_as_dict()
 print(all_devices)
@@ -100,6 +102,16 @@ while resp_dict["Job"]["GetStatus"]["JobRunDetailList"]["JobRunDetail"]["State"]
     resp = cspc.get_job_status(job_id, job_run_id)
     resp_dict = cspc.response_as_dict(resp)
 
+print("\nmodify devices:")
+all_devices = cspc.get_devices_as_dict()
+print(all_devices)
+for index, dev in enumerate(all_devices):
+    dev["PrimaryDeviceName"] = devices[index]["PrimaryDeviceName"]
+    dev["HostName"] = devices[index]["HostName"]
+
+print(cspc.modify_multiple_devices(all_devices))
+all_devices = cspc.get_devices_as_dict()
+print(all_devices)
 
 print("\ndelete non-existing device:")
 print(cspc.delete_multiple_devices([{"Id": "63"}]))
