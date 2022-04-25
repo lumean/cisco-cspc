@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# This script compares unreachable devices from CSPC with the prime inventory
-# if a device cannot be found in prime, this script will delete it from CSPC
+# This script synchronizes all devices from ISE to CSPC. It then
+# compares unreachable devices from CSPC with the ISE inventory and
+# if a device cannot be found in ISE, this script will delete it from CSPC
+# finally a discovery job is triggered for the new devices
 
 import json
 import logging
