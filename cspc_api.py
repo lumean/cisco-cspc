@@ -35,14 +35,14 @@ class CspcApi:
         self.user = user
         self.password = pwd
         self.creds = ":".join([self.user, self.password])
-        self.encodedAuth = base64.b64encode(self.creds.encode("utf-8"))
+        self.encoded_auth = base64.b64encode(self.creds.encode("utf-8"))
 
         if not verify:
             urllib3.disable_warnings()
 
         self.headers = {
             # 'accept': 'application/xml',
-            "Authorization": " ".join(["Basic", self.encodedAuth.decode("utf-8")]),
+            "Authorization": " ".join(["Basic", self.encoded_auth.decode("utf-8")]),
             "cache-control": "no-cache",
         }
         self.kwargs = {"verify": verify, "headers": self.headers}
@@ -73,10 +73,11 @@ class CspcApi:
             str: body of the CSPC response, usually an xml string
 
         Example:
-            # Parse the body with ElementTree (from xml.etree import ElementTree) to proceed:
-            payload = self._get_xml_payload('get_details_of_all_devices.xml')
-            all_devices = self._xml(payload)
-            tree = ElementTree.fromstring(all_devices)
+            Parse the body with ElementTree (from xml.etree import ElementTree) to proceed::
+
+                payload = self._get_xml_payload('get_details_of_all_devices.xml')
+                all_devices = self._xml(payload)
+                tree = ElementTree.fromstring(all_devices)
         """
         link = "https://" + self.host + "/cspc/xml"
 
@@ -536,12 +537,33 @@ class CspcApi:
         return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
     def get_job_by_id(self, job_id):
-        """Discovers multiple devices by IP address and SNMPv2c or SNMPv3 Protocol.
+        """Returns job details
 
         Args:
             job_id (int): the CSPC job id, e.g. as in the response of :func: `<discovery_by_ip_and_snmp>`.
         Returns:
             str: Response of CSPC
+        Example::
+
+            <Response requestId="3333">
+                <Status code='SUCCESSFUL' />
+                <Job>
+                    <GetJobList operationId="1" >
+                        <Status code="SUCCESSFUL"/>
+                        <JobDetailList>
+                            <JobDetail>
+                                <JobId>7</JobId><JobName>XmlApiDiscovery1649670162478</JobName>
+                                <JobGroup>RunNowDiscoveryJobGrp</JobGroup><Description>XmlApiDiscovery1649670162478</Description>
+                                <CreatedBy>admin</CreatedBy><CreatedOn>1649670171000</CreatedOn>
+                                <FirstRunTime>1649670163457</FirstRunTime>
+                                <LastStartTime>1649670163457</LastStartTime><LastRunTime>1649670171623</LastRunTime>
+                                <NextScheduleTime></NextScheduleTime><RunCount>1</RunCount>
+                                <ServiceName></ServiceName><Schedule runnow="true"></Schedule>
+                            </JobDetail>
+                        </JobDetailList>
+                    </GetJobList>
+                </Job>
+            </Response>
         """
         tree = ElementTree.fromstring(self._get_xml_payload("get_job_list.xml"))
         job_list = self._get_xml_elem("GetJobList", tree)
@@ -551,7 +573,7 @@ class CspcApi:
         return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
     def get_job_status(self, job_id, run_id):
-        """Discovers multiple devices by IP address and SNMPv2c or SNMPv3 Protocol.
+        """Returns the status of a job
 
         Args:
             job_id (int): the CSPC job id, e.g. as in the response of :func: `<discovery_by_ip_and_snmp>`.
@@ -559,6 +581,23 @@ class CspcApi:
 
         Returns:
             str: Response of CSPC
+
+        Example::
+
+            <Response requestId="3333">
+                <Status code='SUCCESSFUL' />
+                <Job>
+                    <GetStatus operationId="1" >
+                        <Status code="SUCCESSFUL"/>
+                        <JobRunDetailList>
+                            <JobRunDetail>
+                                <State>Completed</State><Status>Success</Status>
+                                <StartTime>1643028300458</StartTime><EndTime>1643028301375</EndTime>
+                            </JobRunDetail>
+                        </JobRunDetailList>
+                    </GetStatus>
+                </Job>
+            </Response>
         """
         tree = ElementTree.fromstring(self._get_xml_payload("get_job_status.xml"))
         job_list = self._get_xml_elem("GetStatus", tree)
