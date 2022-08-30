@@ -82,12 +82,23 @@ print("\ncheck after modify devices:")
 all_devices = cspc.get_devices_as_dict()
 print(all_devices)
 
+print("\nDiscovery Job start:")
 resp = cspc.discovery_by_ip(all_devices, ["snmpv2c", "snmpv3"])
 resp_dict = cspc.response_as_dict(resp)
 print(json.dumps(resp_dict, indent=2))
 
-job_id = resp_dict["Job"]["Schedule"]["JobDetails"]["JobId"]
-job_run_id = resp_dict["Job"]["Schedule"]["JobDetails"]["JobRunId"]
+# before refactor response_as_dict
+# job_id = resp_dict["Job"]["Schedule"]["JobDetails"]["JobId"]
+# job_run_id = resp_dict["Job"]["Schedule"]["JobDetails"]["JobRunId"]
+job_id = CspcApi.get_in_dict(resp_dict, "Response", "Job", "Schedule", "JobDetails", "JobId")
+job_run_id = CspcApi.get_in_dict(resp_dict, "Response", "Job", "Schedule", "JobDetails", "JobRunId")
+print(job_id)
+print("\nAll Jobs:")
+all_jobs_xml = cspc.get_job_list()
+print(all_jobs_xml)
+all_jobs_dict = cspc.response_as_dict(all_jobs_xml)
+print(json.dumps(all_jobs_dict, indent=2))
+
 # print(cspc.get_job_by_id(7))
 # <Response requestId="3333"><Status code='SUCCESSFUL' /><Job><GetJobList operationId="1" ><Status code="SUCCESSFUL"/>
 # <JobDetailList><JobDetail><JobId>7</JobId><JobName>XmlApiDiscovery1649670162478</JobName><JobGroup>RunNowDiscoveryJobGrp</JobGroup><Description>XmlApiDiscovery1649670162478</Description><CreatedBy>admin</CreatedBy><CreatedOn>1649670171000</CreatedOn><FirstRunTime>1649670163457</FirstRunTime><LastStartTime>1649670163457</LastStartTime><LastRunTime>1649670171623</LastRunTime><NextScheduleTime></NextScheduleTime><RunCount>1</RunCount><ServiceName></ServiceName><Schedule runnow="true"></Schedule></JobDetail></JobDetailList></GetJobList></Job></Response>
@@ -96,8 +107,14 @@ resp = cspc.get_job_status(job_id, job_run_id)
 # <Response requestId="3333"><Status code='SUCCESSFUL' /><Job><GetStatus operationId="1" ><Status code="SUCCESSFUL"/>
 # <JobRunDetailList><JobRunDetail><State>Completed</State><Status>Success</Status><StartTime>1643028300458</StartTime><EndTime>1643028301375</EndTime></JobRunDetail></JobRunDetailList></GetStatus></Job></Response>
 resp_dict = cspc.response_as_dict(resp)
+print("\nget_job_status of discovery:")
 print(json.dumps(resp_dict, indent=2))
-while resp_dict["Job"]["GetStatus"]["JobRunDetailList"]["JobRunDetail"]["State"] != "Completed":
+# while resp_dict["Job"]["GetStatus"]["JobRunDetailList"]["JobRunDetail"]["State"] != "Completed":
+while (
+    CspcApi.get_in_dict(resp_dict, "Response", "Job", "GetStatus", "JobRunDetailList", "JobRunDetail", "State")
+    != "Completed"
+):
+    print("waiting for discovery to finish")
     time.sleep(5)
     resp = cspc.get_job_status(job_id, job_run_id)
     resp_dict = cspc.response_as_dict(resp)
