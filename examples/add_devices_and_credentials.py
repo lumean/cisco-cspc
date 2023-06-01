@@ -5,7 +5,7 @@ import logging
 path = os.path.join(os.path.dirname(__file__), '..')
 sys.path.append(path)
 
-from cspc_api import CspcApi
+from src.cspc_api.cspc_api import CspcApi
 
 format = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"
 logfile=None
@@ -35,16 +35,16 @@ ssh_credentials = {
     }
 }
 devices = [
-    { 
-        'HostName': 'testhostname1', 
-        'IPAddress': '1.2.3.4', 
-        'DomainName': 'testhostname1.example.com', 
+    {
+        'HostName': 'testhostname1',
+        'IPAddress': '1.2.3.4',
+        'DomainName': 'testhostname1.example.com',
         'PrimaryDeviceName': 'testhostname1.example.com',
     },
-    { 
-        'HostName': 'testhostname2', 
-        'IPAddress': '1.2.3.5', 
-        'DomainName': 'testhostname2.example.com', 
+    {
+        'HostName': 'testhostname2',
+        'IPAddress': '1.2.3.5',
+        'DomainName': 'testhostname2.example.com',
         'PrimaryDeviceName': 'testhostname2.example.com',
     },
 ]

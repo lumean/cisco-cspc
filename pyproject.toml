@@ -1,0 +1,24 @@
+[project]
+name = "cspc_api"
+authors = [
+    {name = "Manuel Widmer", email = "mawidmer@cisco.com"},
+]
+version = "1.0.0"
+description = "Python XML web API Client for Cisco's Common Services Platform Collector (CSPC)"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.7"
+
+dependencies = [
+  "requests"
+]
+
+[build-system]
+requires = ["setuptools >= 45.0.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+# list of folders that contain the packages (["."] by default)
+where = ["src"]
+# package names should match these glob patterns (["*"] by default)
+include = ["cspc_api"]

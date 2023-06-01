@@ -29,7 +29,7 @@ for folder, origin in deps.items():
         print(f"cd ..; git clone {origin}")
         exit()
 
-from cspc_api import CspcApi
+from src.cspc_api.cspc_api import CspcApi
 from ise_ers_api import IseErsApi
 
 format = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"

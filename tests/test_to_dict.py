@@ -4,7 +4,7 @@ import sys
 
 base_dir = os.path.join(os.path.dirname(__file__), "..")
 sys.path.append(base_dir)
-from cspc_api import CspcApi
+from src.cspc_api.cspc_api import CspcApi
 
 test_xml = os.path.join(os.path.dirname(__file__), "example.xml")
 
