@@ -5,13 +5,12 @@ import sys
 import time
 
 from dotenv import load_dotenv
-
-# base_dir = os.path.join(os.path.dirname(__file__), "..")
-# sys.path.append(base_dir)
 from cspc_api import CspcApi
 
+base_dir = os.path.dirname(os.path.dirname(__file__))
+
 fmt = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"
-logfile = "log.txt"
+logfile = os.path.join(os.path.dirname(__file__), "log.txt")
 logging.basicConfig(format=fmt, level=logging.DEBUG, datefmt="%H:%M:%S", filename=logfile)
 
 load_dotenv(os.path.join(base_dir, "tests", "cspc.env"))

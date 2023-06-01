@@ -13,18 +13,12 @@ More information can be found at [CSPC Install and Upgrade Guides](https://www.c
 ## Installation
 
 ```
-git clone https://github.com/lumean/cisco-cspc.git
-cd cisco-cspc
-pip install -r requirements.txt
+pip install git+https://github.com/lumean/cisco-cspc.git@v1.0.0
 ```
 
 ## Usage
 
 ```
-# include this repo to your path (adapt accordingly):
-path = os.path.join(os.path.dirname(__file__), 'path', 'to', 'this', 'repo')
-sys.path.append(path)
-
 from cspc_api import CspcApi
 
 format = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"
@@ -42,7 +36,7 @@ See also [Examples](examples/)
 
 ## How to test the software
 
-Tested agains CSPC patch 2.10.0.1
+Tested against CSPC patch 2.10.0.1
 
 For testing download and setup CSPC as VM, see below.
 
@@ -54,10 +48,6 @@ This project is maintained in my free time, so please be patient.
 
 ## Getting involved
 
-Pull requests are welcome!
-
-Currently missing:
-- unit tests
 
 ## Author(s)
 
