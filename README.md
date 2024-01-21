@@ -12,11 +12,32 @@ More information can be found at [CSPC Install and Upgrade Guides](https://www.c
 
 ## Installation
 
+Starting from v1.0.0 this repo/library can be directly installed from pip:
+
 ```
 pip install git+https://github.com/lumean/cisco-cspc.git@v1.0.0
 ```
 
+Before with version v0.9.0 you had to clone the repo to a sibling folder next to your project:
+
+```
+git clone --branch v0.9.0 https://github.com/lumean/cisco-cspc.git
+cd cisco-cspc
+pip install -r requirements.txt
+
+...  and then mangle the load path to import it, which causes IDEs & linters to complain
+
+# include this repo to your path (adapt accordingly):
+path = os.path.join(os.path.dirname(__file__), 'path', 'to', 'cisco-cspc', 'repo')
+sys.path.append(path)
+
+from cspc_api import CspcApi
+```
+
 ## Usage
+
+Starting with v1.0.0 this is a proper package and it is no longer needed to modify
+the load path for importing.
 
 ```
 from cspc_api import CspcApi
