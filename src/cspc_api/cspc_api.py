@@ -7,6 +7,7 @@ import os
 import sys
 import time
 from xml.etree import ElementTree
+from xml.etree.ElementTree import Element
 
 import requests
 import urllib3
@@ -94,7 +95,7 @@ class CspcApi:
         return body
 
     @staticmethod
-    def _to_dict(xml_elem, parents_children=None):
+    def _to_dict(xml_elem, parents_children=None) -> dict:
         """Recursively Converts an xml element tree to a dictionary.
 
         Each xml element is converted to a dict as follows::
@@ -141,13 +142,13 @@ class CspcApi:
         return result_dict
 
     @staticmethod
-    def response_as_dict(api_response_text):
+    def response_as_dict(api_response_text) -> dict:
         """Converts the response text (usually xml) to a dict"""
         tree = ElementTree.fromstring(api_response_text)
         return CspcApi._to_dict(tree)
 
     @staticmethod
-    def get_in_dict(response_dict, *args):
+    def get_in_dict(response_dict, *args) -> str:
         """_summary_
 
         Args:
@@ -250,7 +251,7 @@ class CspcApi:
 
         return body
 
-    def get_devices(self):
+    def get_devices(self) -> list[Element]:
         """Returns all registered devices as list of xml Elementes
 
         Returns:

@@ -16,6 +16,8 @@ More information can be found at [CSPC Install and Upgrade Guides](https://www.c
 git clone https://github.com/lumean/cisco-cspc.git
 cd cisco-cspc
 pip install -r requirements.txt
+
+pip install git+https://github.com/lumean/cisco-cspc.git@pyproject_toml
 ```
 
 ## Usage
@@ -175,6 +177,9 @@ chage -l collectorlogin
 ```bash
 # install development dependencies
 pip install -r requirements-dev.txt
+
+# install this library as editable from the current working directory
+pip install -e .
 
 cd tests
 # change seetings below to fit your setup
