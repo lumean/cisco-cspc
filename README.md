@@ -187,6 +187,9 @@ chage -l collectorlogin
 # install development dependencies
 pip install -r requirements-dev.txt
 
+# install this library as editable from the current working directory
+pip install -e .
+
 cd tests
 # change seetings below to fit your setup
 cat > cspc.env << EOF

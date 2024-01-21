@@ -5,6 +5,7 @@ import sys
 import time
 
 from dotenv import load_dotenv
+
 from cspc_api import CspcApi
 
 base_dir = os.path.dirname(os.path.dirname(__file__))
