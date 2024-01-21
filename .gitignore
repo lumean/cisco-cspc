@@ -1,4 +1,5 @@
 cspc.env
+log.txt
 
 # Ansible #
 *.retry
