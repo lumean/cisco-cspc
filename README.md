@@ -15,7 +15,7 @@ More information can be found at [CSPC Install and Upgrade Guides](https://www.c
 Starting from v1.0.0 this repo/library can be directly installed from pip:
 
 ```
-pip install git+https://github.com/lumean/cisco-cspc.git@v1.0.0
+pip install git+https://github.com/lumean/cisco-cspc.git@v1.1.0
 ```
 
 Before with version v0.9.0 you had to clone the repo to a sibling folder next to your project:
