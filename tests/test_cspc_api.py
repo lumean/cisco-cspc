@@ -35,10 +35,13 @@ snmp_credentials = {
     },
 }
 snmpv3_credentials = {
-    "my_snmp_wildcard": {
+    "my_snmpv3_wildcard": {
         "ip_expression": "*.*.*.*",
-        "snmp_read_community": "public",
-        "snmp_write_community": "blub",
+        "snmpv3_user": "public",
+        "snmpv3_auth_algorithm": "SHA",  # SHA, MD5
+        "snmpv3_auth_password": "demo_authentication_pw",
+        "snmpv3_priv_algorithm": "AES-128",  # 3DES, AES-128, AES-192, AES-256
+        "snmpv3_priv_password": "demo_privacy_pw",
     },
 }
 ssh_credentials = {
@@ -47,6 +50,14 @@ ssh_credentials = {
         "user": "abcd",
         "password": "test",
         "enable_password": "test",
+    },
+}
+telnet_credentials = {
+    "my_telnet_wildcard": {
+        "ip_expression": "*.*.*.*",
+        "user": "testtelnet",
+        "password": "testtelnet",
+        "enable_password": "testtelnet",
     },
 }
 devices = [
@@ -71,9 +82,10 @@ print(all_devices)
 print(cspc.delete_multiple_devices(all_devices))
 
 print("\nadd some credentials:")
+print(cspc.add_multiple_device_credentials_telnet(telnet_credentials))
 print(cspc.add_multiple_device_credentials_ssh(ssh_credentials))
 print(cspc.add_multiple_device_credentials_snmpv2c(snmp_credentials))
-# print(cspc.add_multiple_device_credentials_snmpv3(snmp_credentials))
+print(cspc.add_multiple_device_credentials_snmpv3(snmpv3_credentials))
 
 print("\nadd devices:")
 print(cspc.add_multiple_devices(devices))
