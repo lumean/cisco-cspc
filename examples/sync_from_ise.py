@@ -13,11 +13,13 @@ import re
 import socket
 import sys
 
+# pip install git+https://github.com/lumean/cisco-cspc.git@v1.0.0
+from cspc_api import CspcApi
+
 # dependencies
-deps = ["cisco-cspc", "cisco-ise-ers-api"]
+deps = ["cisco-ise-ers-api"]
 # dependencies
 deps = {
-    "cisco-cspc": "https://github.com/lumean/cisco-cspc.git",
     "cisco-ise-ers-api": "https://github.com/lumean/cisco-ise-ers-api.git",
 }
 for folder, origin in deps.items():
@@ -29,7 +31,6 @@ for folder, origin in deps.items():
         print(f"cd ..; git clone {origin}")
         exit()
 
-from cspc_api import CspcApi
 from ise_ers_api import IseErsApi
 
 format = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"

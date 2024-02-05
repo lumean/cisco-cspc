@@ -12,19 +12,34 @@ More information can be found at [CSPC Install and Upgrade Guides](https://www.c
 
 ## Installation
 
+Starting from v1.0.0 this repo/library can be directly installed from pip:
+
 ```
-git clone https://github.com/lumean/cisco-cspc.git
+pip install git+https://github.com/lumean/cisco-cspc.git@v1.0.0
+```
+
+Before with version v0.9.0 you had to clone the repo to a sibling folder next to your project:
+
+```
+git clone --branch v0.9.0 https://github.com/lumean/cisco-cspc.git
 cd cisco-cspc
 pip install -r requirements.txt
+
+...  and then mangle the load path to import it, which causes IDEs & linters to complain
+
+# include this repo to your path (adapt accordingly):
+path = os.path.join(os.path.dirname(__file__), 'path', 'to', 'cisco-cspc', 'repo')
+sys.path.append(path)
+
+from cspc_api import CspcApi
 ```
 
 ## Usage
 
-```
-# include this repo to your path (adapt accordingly):
-path = os.path.join(os.path.dirname(__file__), 'path', 'to', 'this', 'repo')
-sys.path.append(path)
+Starting with v1.0.0 this is a proper package and it is no longer needed to modify
+the load path for importing.
 
+```
 from cspc_api import CspcApi
 
 format = "%(asctime)s %(name)10s %(levelname)8s: %(message)s"
@@ -42,7 +57,7 @@ See also [Examples](examples/)
 
 ## How to test the software
 
-Tested agains CSPC patch 2.10.0.1
+Tested against CSPC patch 2.10.0.1
 
 For testing download and setup CSPC as VM, see below.
 
@@ -54,10 +69,6 @@ This project is maintained in my free time, so please be patient.
 
 ## Getting involved
 
-Pull requests are welcome!
-
-Currently missing:
-- unit tests
 
 ## Author(s)
 
@@ -175,6 +186,9 @@ chage -l collectorlogin
 ```bash
 # install development dependencies
 pip install -r requirements-dev.txt
+
+# install this library as editable from the current working directory
+pip install -e .
 
 cd tests
 # change seetings below to fit your setup

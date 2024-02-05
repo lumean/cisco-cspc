@@ -1,0 +1,111 @@
+<Response requestId="3333">
+  <Status code='SUCCESSFUL' />
+  <Job>
+    <GetJobList operationId="1">
+      <Status code="SUCCESSFUL"/>
+      <JobDetailList>
+        <JobDetail>
+          <JobId>1</JobId>
+          <JobName>PurgeJob</JobName>
+          <JobGroup>RunNowMiscGrp</JobGroup>
+          <Description>PurgeJob</Description>
+          <CreatedBy>system</CreatedBy>
+          <CreatedOn>1633005925000</CreatedOn>
+          <FirstRunTime>1643028300458</FirstRunTime>
+          <LastStartTime>1647953100021</LastStartTime>
+          <LastRunTime>1647953100175</LastRunTime>
+          <NextScheduleTime>1661949900000</NextScheduleTime>
+          <RunCount>4</RunCount>
+          <ServiceName></ServiceName>
+          <Schedule runnow="false">
+            <Start>1633005925897</Start>
+          </Schedule>
+        </JobDetail>
+        <JobDetail>
+          <JobId>2</JobId>
+          <JobName>PwdNotificationJob</JobName>
+          <JobGroup>RunNowMiscGrp</JobGroup>
+          <Description>PwdNotificationJob</Description>
+          <CreatedBy>system</CreatedBy>
+          <CreatedOn>1633005926000</CreatedOn>
+          <FirstRunTime>1633005926074</FirstRunTime>
+          <LastStartTime>1647953125999</LastStartTime>
+          <LastRunTime>1647953126006</LastRunTime>
+          <NextScheduleTime>1661906725993</NextScheduleTime>
+          <RunCount>7</RunCount>
+          <ServiceName></ServiceName>
+          <Schedule runnow="false">
+            <Start>1633005925993</Start>
+            <Repeat>
+              <IntervalMilliSeconds>43200000</IntervalMilliSeconds>
+            </Repeat>
+          </Schedule>
+        </JobDetail>
+        <JobDetail>
+          <JobId>3</JobId>
+          <JobName>_Standard_Agent_Poll_Job</JobName>
+          <JobGroup>AgentPollerJobGrp</JobGroup>
+          <Description>_Standard_Agent_Poll_Job</Description>
+          <CreatedBy>Agent</CreatedBy>
+          <CreatedOn>1647347918000</CreatedOn>
+          <FirstRunTime>1647866760007</FirstRunTime>
+          <LastStartTime>1661896140015</LastStartTime>
+          <LastRunTime>1661896140020</LastRunTime>
+          <NextScheduleTime>1661896200000</NextScheduleTime>
+          <RunCount>3409</RunCount>
+          <ServiceName></ServiceName>
+          <Schedule runnow="false">
+            <CronExpList>
+              <CronExp>0 0/1 * * * ?</CronExp>
+            </CronExpList>
+          </Schedule>
+        </JobDetail>
+        <JobDetail>
+          <JobId>4</JobId>
+          <JobName>XmlApiDiscovery1661892473980</JobName>
+          <JobGroup>RunNowDiscoveryJobGrp</JobGroup>
+          <Description>XmlApiDiscovery1661892473980</Description>
+          <CreatedBy>admin</CreatedBy>
+          <CreatedOn>1661892482000</CreatedOn>
+          <FirstRunTime>1661892474615</FirstRunTime>
+          <LastStartTime>1661892474615</LastStartTime>
+          <LastRunTime>1661892482782</LastRunTime>
+          <NextScheduleTime></NextScheduleTime>
+          <RunCount>1</RunCount>
+          <ServiceName></ServiceName>
+          <Schedule runnow="true"></Schedule>
+        </JobDetail>
+        <JobDetail>
+          <JobId>5</JobId>
+          <JobName>XmlApiDiscovery1661896053392</JobName>
+          <JobGroup>RunNowDiscoveryJobGrp</JobGroup>
+          <Description>XmlApiDiscovery1661896053392</Description>
+          <CreatedBy>admin</CreatedBy>
+          <CreatedOn>1661896062000</CreatedOn>
+          <FirstRunTime>1661896053962</FirstRunTime>
+          <LastStartTime>1661896053962</LastStartTime>
+          <LastRunTime>1661896062147</LastRunTime>
+          <NextScheduleTime></NextScheduleTime>
+          <RunCount>1</RunCount>
+          <ServiceName></ServiceName>
+          <Schedule runnow="true"></Schedule>
+        </JobDetail>
+        <JobDetail>
+          <JobId>6</JobId>
+          <JobName>XmlApiDiscovery1661896198371</JobName>
+          <JobGroup>RunNowDiscoveryJobGrp</JobGroup>
+          <Description>XmlApiDiscovery1661896198371</Description>
+          <CreatedBy>admin</CreatedBy>
+          <CreatedOn>1661896198000</CreatedOn>
+          <FirstRunTime>1661896198785</FirstRunTime>
+          <LastStartTime>1661896198785</LastStartTime>
+          <LastRunTime></LastRunTime>
+          <NextScheduleTime></NextScheduleTime>
+          <RunCount>1</RunCount>
+          <ServiceName></ServiceName>
+          <Schedule runnow="true"></Schedule>
+        </JobDetail>
+      </JobDetailList>
+    </GetJobList>
+  </Job>
+</Response>

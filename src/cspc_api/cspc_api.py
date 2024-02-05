@@ -6,11 +6,12 @@ import logging
 import os
 import sys
 import time
-from dis import dis
 from xml.etree import ElementTree
+from xml.etree.ElementTree import Element
 
 import requests
 import urllib3
+from pyexpat import ErrorString
 
 
 class CspcApi:
@@ -35,14 +36,14 @@ class CspcApi:
         self.user = user
         self.password = pwd
         self.creds = ":".join([self.user, self.password])
-        self.encodedAuth = base64.b64encode(self.creds.encode("utf-8"))
+        self.encoded_auth = base64.b64encode(self.creds.encode("utf-8"))
 
         if not verify:
             urllib3.disable_warnings()
 
         self.headers = {
             # 'accept': 'application/xml',
-            "Authorization": " ".join(["Basic", self.encodedAuth.decode("utf-8")]),
+            "Authorization": " ".join(["Basic", self.encoded_auth.decode("utf-8")]),
             "cache-control": "no-cache",
         }
         self.kwargs = {"verify": verify, "headers": self.headers}
@@ -73,10 +74,11 @@ class CspcApi:
             str: body of the CSPC response, usually an xml string
 
         Example:
-            # Parse the body with ElementTree (from xml.etree import ElementTree) to proceed:
-            payload = self._get_xml_payload('get_details_of_all_devices.xml')
-            all_devices = self._xml(payload)
-            tree = ElementTree.fromstring(all_devices)
+            Parse the body with ElementTree (from xml.etree import ElementTree) to proceed::
+
+                payload = self._get_xml_payload('get_details_of_all_devices.xml')
+                all_devices = self._xml(payload)
+                tree = ElementTree.fromstring(all_devices)
         """
         link = "https://" + self.host + "/cspc/xml"
 
@@ -97,35 +99,83 @@ class CspcApi:
             raise RuntimeError(response)
         return body
 
-    def _to_dict(self, xml_tree, result_dict=None):
+    @staticmethod
+    def _to_dict(xml_elem, parents_children=None) -> dict:
         """Recursively Converts an xml element tree to a dictionary.
 
-        Attributes are converted to a dict under the "_attributes" key.
+        Each xml element is converted to a dict as follows::
+
+            {
+                "TagName" : {
+                    "attributes": {}
+                    "text": "Actual Text Content"
+                    "children": [
+                        # repeat same structure
+                    ]
+                }
+            }
 
         Args:
-            xml_element (xml.etree.Tree):
-            result_dict: only needed during recursion
+            xml_element (xml.Element):
+            parents_children: only needed during recursion
 
         Returns
             dict
         """
-        if result_dict is None:
-            result_dict = {}
-        for elem in xml_tree:
-            result_dict["_attributes"] = elem.attrib
-            # check if it has child elements
-            if len(elem) > 0:
-                child_dict = {}
-                self._to_dict(elem, child_dict)
-                result_dict[elem.tag] = child_dict
-            else:
-                result_dict[elem.tag] = elem.text
+        # convert current elem to dict
+        xml_elem_dict = {
+            xml_elem.tag: {
+                "attributes": xml_elem.attrib,
+                "text": xml_elem.text,
+                "children": [],
+            }
+        }
+
+        # if there is no parent, we are the root
+        result_dict = None
+        if parents_children is None:
+            result_dict = xml_elem_dict
+
+        # append current elem to list of children of parent elem
+        if parents_children is not None:
+            parents_children.append(xml_elem_dict)
+
+        # loop through all element children
+        for elem in xml_elem:
+            CspcApi._to_dict(elem, xml_elem_dict[xml_elem.tag]["children"])
+
         return result_dict
 
-    def response_as_dict(self, api_response_text):
+    @staticmethod
+    def response_as_dict(api_response_text) -> dict:
         """Converts the response text (usually xml) to a dict"""
         tree = ElementTree.fromstring(api_response_text)
-        return self._to_dict(tree)
+        return CspcApi._to_dict(tree)
+
+    @staticmethod
+    def get_in_dict(response_dict, *args) -> str:
+        """_summary_
+
+        Args:
+            response_dict (dict): _description_
+
+        Returns:
+            str: None if not found, or the string.
+        """
+        if len(args) == 1:
+            return response_dict[args[0]]["text"]
+
+        # Else recurse
+        children = response_dict[args[0]]["children"]
+        for child in children:
+            if args[1] in child:
+                result = CspcApi.get_in_dict(child, *args[1:])
+                if result is not None:
+                    return result
+                # else continue in next child
+
+        # raise if we cannot find the next key
+        raise KeyError(f"'{args[1]}' not found in {children}")
 
     def _get_xml_payload(self, request_name):
         """Loads the full/skeleton xml request from an example file
@@ -216,7 +266,7 @@ class CspcApi:
 
         return body
 
-    def get_devices(self):
+    def get_devices(self) -> list[Element]:
         """Returns all registered devices as list of xml Elementes
 
         Returns:
@@ -617,13 +667,70 @@ class CspcApi:
 
         return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
-    def get_job_by_id(self, job_id):
-        """Discovers multiple devices by IP address and SNMPv2c or SNMPv3 Protocol.
+    def get_job_list(self):
+        """Returns job details of all jobs
 
         Args:
             job_id (int): the CSPC job id, e.g. as in the response of :func: `<discovery_by_ip_and_snmp>`.
         Returns:
             str: Response of CSPC
+        Example::
+
+            <Response requestId="3333">
+                <Status code='SUCCESSFUL' />
+                <Job>
+                    <GetJobList operationId="1" >
+                        <Status code="SUCCESSFUL"/>
+                        <JobDetailList>
+                            <JobDetail>
+                                <JobId>7</JobId><JobName>XmlApiDiscovery1649670162478</JobName>
+                                <JobGroup>RunNowDiscoveryJobGrp</JobGroup><Description>XmlApiDiscovery1649670162478</Description>
+                                <CreatedBy>admin</CreatedBy><CreatedOn>1649670171000</CreatedOn>
+                                <FirstRunTime>1649670163457</FirstRunTime>
+                                <LastStartTime>1649670163457</LastStartTime><LastRunTime>1649670171623</LastRunTime>
+                                <NextScheduleTime></NextScheduleTime><RunCount>1</RunCount>
+                                <ServiceName></ServiceName><Schedule runnow="true"></Schedule>
+                            </JobDetail>
+                            <JobDetail>
+                              ...
+                            </JobDetail>
+                        </JobDetailList>
+                    </GetJobList>
+                </Job>
+            </Response>
+        """
+        tree = ElementTree.fromstring(self._get_xml_payload("get_job_list_all.xml"))
+        # job_list = self._get_xml_elem("GetJobList", tree)
+        return self._xml(ElementTree.tostring(tree, encoding="unicode"))
+
+    def get_job_by_id(self, job_id):
+        """Returns job details
+
+        Args:
+            job_id (int): the CSPC job id, e.g. as in the response of :func: `<discovery_by_ip_and_snmp>`.
+        Returns:
+            str: Response of CSPC
+        Example::
+
+            <Response requestId="3333">
+                <Status code='SUCCESSFUL' />
+                <Job>
+                    <GetJobList operationId="1" >
+                        <Status code="SUCCESSFUL"/>
+                        <JobDetailList>
+                            <JobDetail>
+                                <JobId>7</JobId><JobName>XmlApiDiscovery1649670162478</JobName>
+                                <JobGroup>RunNowDiscoveryJobGrp</JobGroup><Description>XmlApiDiscovery1649670162478</Description>
+                                <CreatedBy>admin</CreatedBy><CreatedOn>1649670171000</CreatedOn>
+                                <FirstRunTime>1649670163457</FirstRunTime>
+                                <LastStartTime>1649670163457</LastStartTime><LastRunTime>1649670171623</LastRunTime>
+                                <NextScheduleTime></NextScheduleTime><RunCount>1</RunCount>
+                                <ServiceName></ServiceName><Schedule runnow="true"></Schedule>
+                            </JobDetail>
+                        </JobDetailList>
+                    </GetJobList>
+                </Job>
+            </Response>
         """
         tree = ElementTree.fromstring(self._get_xml_payload("get_job_list.xml"))
         job_list = self._get_xml_elem("GetJobList", tree)
@@ -633,7 +740,7 @@ class CspcApi:
         return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
     def get_job_status(self, job_id, run_id):
-        """Discovers multiple devices by IP address and SNMPv2c or SNMPv3 Protocol.
+        """Returns the status of a job
 
         Args:
             job_id (int): the CSPC job id, e.g. as in the response of :func: `<discovery_by_ip_and_snmp>`.
@@ -641,6 +748,23 @@ class CspcApi:
 
         Returns:
             str: Response of CSPC
+
+        Example::
+
+            <Response requestId="3333">
+                <Status code='SUCCESSFUL' />
+                <Job>
+                    <GetStatus operationId="1" >
+                        <Status code="SUCCESSFUL"/>
+                        <JobRunDetailList>
+                            <JobRunDetail>
+                                <State>Completed</State><Status>Success</Status>
+                                <StartTime>1643028300458</StartTime><EndTime>1643028301375</EndTime>
+                            </JobRunDetail>
+                        </JobRunDetailList>
+                    </GetStatus>
+                </Job>
+            </Response>
         """
         tree = ElementTree.fromstring(self._get_xml_payload("get_job_status.xml"))
         job_list = self._get_xml_elem("GetStatus", tree)
