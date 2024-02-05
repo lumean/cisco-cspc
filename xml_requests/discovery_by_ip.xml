@@ -16,6 +16,7 @@
             <!--DAVProtocol>snmpv2c</DAVProtocol>
             <DAVProtocol>snmpv3</DAVProtocol-->
           </DAVProtocolList>
+          <!--imeout>10</Timeout-->
         </DiscoveryOptions>
         </DiscoveryOptionsList>
       </DiscoveryJob>

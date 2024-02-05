@@ -81,7 +81,12 @@ class CspcApi:
         link = "https://" + self.host + "/cspc/xml"
 
         self.logger.debug(
-            "POST " + link + "\nRequest Headers: " + str(self.headers) + "\nRequest Body: " + str(payload)
+            "POST "
+            + link
+            + "\nRequest Headers: "
+            + str(self.headers)
+            + "\nRequest Body: "
+            + str(payload)
         )
         response = requests.post(link, payload, **self.kwargs)
         response_headers = response.headers
@@ -188,11 +193,21 @@ class CspcApi:
 
         link = "https://" + self.host + "/cspc/seedfile"
 
-        files = {"request": (None, xmlrequest.encode("utf8")), "file": (seed_file_name, csv.encode("utf8"))}
+        files = {
+            "request": (None, xmlrequest.encode("utf8")),
+            "file": (seed_file_name, csv.encode("utf8")),
+        }
 
         response = requests.post(link, files=files, headers=self.headers, verify=False)
 
-        self.logger.debug("POST " + link + "\nRequest Headers: " + str(self.headers) + "\nRequest Body: " + str(files))
+        self.logger.debug(
+            "POST "
+            + link
+            + "\nRequest Headers: "
+            + str(self.headers)
+            + "\nRequest Body: "
+            + str(files)
+        )
 
         response_headers = response.headers
         self.logger.debug("Response Headers:\n" + str(response_headers))
@@ -364,8 +379,12 @@ class CspcApi:
             # SNMPv2c credential
             device_credential = ElementTree.Element("DeviceCredential", identifier=cred_name)
             self._add_elem_with_text("Protocol", "snmpv2c", device_credential)
-            self._add_elem_with_text("ReadCommunity", creds["snmp_read_community"], device_credential)
-            self._add_elem_with_text("WriteCommunity", creds["snmp_write_community"], device_credential)
+            self._add_elem_with_text(
+                "ReadCommunity", creds["snmp_read_community"], device_credential
+            )
+            self._add_elem_with_text(
+                "WriteCommunity", creds["snmp_write_community"], device_credential
+            )
             ip_expr = ElementTree.Element("IpExpressionList")
             self._add_elem_with_text("IpExpression", creds["ip_expression"], ip_expr)
             device_credential.append(ip_expr)
@@ -500,7 +519,12 @@ class CspcApi:
 
         return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
-    def discovery_by_ip(self, device_array, protocol_list=["snmpv2c"]):  # pylint: disable=dangerous-default-value
+    def discovery_by_ip(
+        self,
+        device_array,
+        protocol_list=["snmpv2c"],
+        timeout=10,
+    ):  # pylint: disable=dangerous-default-value
         """Discovers multiple devices by IP address and tries given list of protocols.
 
         Note: discovery can take a long time. E.g. 5k devices will take up to 50 minutes.
@@ -509,7 +533,9 @@ class CspcApi:
         Args:
             device_array (list): list of dictionaries, as returned by :func: `<get_devices_as_dict>`.
                                  Each dict needs at least an 'IPAddress' key.
-            protocol_list (list):
+            protocol_list (list): list of protocols used for the discovery. can be multiple.
+                                  snmpv2c|snmpv3, default: [snmpv2c]
+            timeout (int): timeout in seconds for the discovery
         Returns:
             str: Response of CSPC
         """
@@ -532,6 +558,62 @@ class CspcApi:
             elem = ElementTree.Element("DAVProtocol")
             elem.text = discovery_proto
             proto_list.append(elem)
+
+        discovery_options = self._get_xml_elem("DiscoveryOptions", tree)
+        elem = ElementTree.Element("Timeout")
+        elem.text = str(timeout)
+        discovery_options.append(elem)
+
+        return self._xml(ElementTree.tostring(tree, encoding="unicode"))
+
+    def discovery_by_ip_range(
+        self,
+        ip_ranges: list[dict],
+        protocol_list=["snmpv2c"],
+        timeout=10,
+    ):  # pylint: disable=dangerous-default-value
+        """Discovers multiple devices by IP address and tries given list of protocols.
+
+        Note: discovery can take a long time. E.g. 5k devices will take up to 50 minutes.
+        You might want to poll the discovery job for state == Completed.
+
+        Args:
+            ip_ranges (list): list of dictionaries. Each dict needs a 'start' and 'end' key.
+            protocol_list (list): list of protocols used for the discovery. can be multiple.
+                                  snmpv2c|snmpv3, default: [snmpv2c]
+            timeout (int): timeout in seconds for the discovery
+        Returns:
+            str: Response of CSPC
+        """
+        tree = ElementTree.fromstring(self._get_xml_payload("discovery_by_range.xml"))
+        discovery_job = self._get_xml_elem("DiscoveryJob", tree)
+        # make sure discoveryjob has a unique identifier by appending current time in ms.
+        discovery_job.set("identifier", f"XmlApiDiscovery{int(time.time()*1000)}")
+        ip_range_list = self._get_xml_elem("IPRangeList", tree)
+        for range in ip_ranges:
+            ip_range = ElementTree.Element("IPRange")
+            start = ElementTree.Element("Start")
+            start.text = range["start"]
+            end = ElementTree.Element("End")
+            end.text = range["end"]
+            ip_range.append(start)
+            ip_range.append(end)
+            ip_range_list.append(ip_range)
+
+        for discovery_proto in protocol_list:
+            proto_list = self._get_xml_elem("MgmtProtocolList", tree)
+            elem = ElementTree.Element("MgmtProtocol")
+            elem.text = discovery_proto
+            proto_list.append(elem)
+            proto_list = self._get_xml_elem("DAVProtocolList", tree)
+            elem = ElementTree.Element("DAVProtocol")
+            elem.text = discovery_proto
+            proto_list.append(elem)
+
+        discovery_options = self._get_xml_elem("DiscoveryOptions", tree)
+        elem = ElementTree.Element("Timeout")
+        elem.text = str(timeout)
+        discovery_options.append(elem)
 
         return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
@@ -571,7 +653,14 @@ class CspcApi:
         return self._xml(ElementTree.tostring(tree, encoding="unicode"))
 
     def get_formatted_csv_device_entry(
-        self, ipaddress, hostname="", username="", password="", enable_password="", snmp_v2_RO="", snmp_v2_RW=""
+        self,
+        ipaddress,
+        hostname="",
+        username="",
+        password="",
+        enable_password="",
+        snmp_v2_RO="",
+        snmp_v2_RW="",
     ):
         """
         Returns:
@@ -632,7 +721,12 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         exit(f"usage: ./{sys.argv[0]} CSPC_IP")
 
-    c = CspcApi(f"{sys.argv[1]}:8001", os.environ.get("CSPC_USER"), os.environ.get("CSPC_PASSWORD"), verify=False)
+    c = CspcApi(
+        f"{sys.argv[1]}:8001",
+        os.environ.get("CSPC_USER"),
+        os.environ.get("CSPC_PASSWORD"),
+        verify=False,
+    )
     c._info()
     # print(os.path.realpath(__file__))
     u = c.get_unreachable_devices()

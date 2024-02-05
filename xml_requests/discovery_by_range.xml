@@ -1,0 +1,28 @@
+<Request xmlns="http://www.parinetworks.com/api/schemas/1.1" requestId="3333">
+  <Job service_name="SMARTNET_TOTAL_CARE">
+    <Schedule operationId="2">
+      <JobSchedule runnow="true" />
+      <DiscoveryJob identifier="max-test16">
+        <DiscoveryOptionsList>
+          <DiscoveryOptions>
+            <IPRangeList>
+              <!-- IPRange>
+                <Start>20.20.20.0</Start>
+                <End>20.20.20.10</End>
+              </IPRange-->
+            </IPRangeList>
+            <MgmtProtocolList>
+              <!--MgmtProtocol>snmpv2c</MgmtProtocol>
+              <MgmtProtocol>snmpv3</MgmtProtocol-->
+            </MgmtProtocolList>
+            <DAVProtocolList>
+              <!--DAVProtocol>snmpv2c</DAVProtocol>
+              <DAVProtocol>snmpv3</DAVProtocol-->
+            </DAVProtocolList>
+            <!--imeout>10</Timeout-->
+          </DiscoveryOptions>
+        </DiscoveryOptionsList>
+      </DiscoveryJob>
+    </Schedule>
+  </Job>
+</Request>

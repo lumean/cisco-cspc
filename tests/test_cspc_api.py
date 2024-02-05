@@ -34,6 +34,13 @@ snmp_credentials = {
         "snmp_write_community": "blub",
     },
 }
+snmpv3_credentials = {
+    "my_snmp_wildcard": {
+        "ip_expression": "*.*.*.*",
+        "snmp_read_community": "public",
+        "snmp_write_community": "blub",
+    },
+}
 ssh_credentials = {
     "my_ssh_wildcard": {
         "ip_expression": "*.*.*.*",
@@ -66,6 +73,7 @@ print(cspc.delete_multiple_devices(all_devices))
 print("\nadd some credentials:")
 print(cspc.add_multiple_device_credentials_ssh(ssh_credentials))
 print(cspc.add_multiple_device_credentials_snmpv2c(snmp_credentials))
+# print(cspc.add_multiple_device_credentials_snmpv3(snmp_credentials))
 
 print("\nadd devices:")
 print(cspc.add_multiple_devices(devices))
@@ -82,7 +90,18 @@ print("\ncheck after modify devices:")
 all_devices = cspc.get_devices_as_dict()
 print(all_devices)
 
+print("\nStart Discovery by IP:")
 resp = cspc.discovery_by_ip(all_devices, ["snmpv2c", "snmpv3"])
+resp_dict = cspc.response_as_dict(resp)
+print(json.dumps(resp_dict, indent=2))
+
+ip_range = [
+    {"start": "10.10.10.1", "end": "10.10.10.3"},
+    {"start": "10.10.10.100", "end": "10.10.10.103"},
+]
+
+print("\nStart Discovery by IP Range:")
+resp = cspc.discovery_by_ip_range(ip_range, ["snmpv3"])
 resp_dict = cspc.response_as_dict(resp)
 print(json.dumps(resp_dict, indent=2))
 
@@ -97,6 +116,7 @@ resp = cspc.get_job_status(job_id, job_run_id)
 # <JobRunDetailList><JobRunDetail><State>Completed</State><Status>Success</Status><StartTime>1643028300458</StartTime><EndTime>1643028301375</EndTime></JobRunDetail></JobRunDetailList></GetStatus></Job></Response>
 resp_dict = cspc.response_as_dict(resp)
 print(json.dumps(resp_dict, indent=2))
+print("\nWait for job to complete:")
 while resp_dict["Job"]["GetStatus"]["JobRunDetailList"]["JobRunDetail"]["State"] != "Completed":
     time.sleep(5)
     resp = cspc.get_job_status(job_id, job_run_id)
